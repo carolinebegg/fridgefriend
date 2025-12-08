@@ -1,5 +1,5 @@
 // src/screens/FridgeScreen.tsx
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -8,25 +8,18 @@ import {
   Pressable,
   ScrollView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+
 import { fridgeApi, FridgeItem } from "../api/fridgeApi";
 import ItemEditorModal, {
   ItemEditorValues,
 } from "../components/ItemEditorModal";
-import { getFridgeIconForItem } from "../utils/fridgeIcons";
+import FridgeShelf from "../components/FridgeShelf";
+import { FRIDGE_COLORS } from "../styles/fridgeTheme";
 
-const COLORS = {
-  background: "#FFFDF7",
-  card: "#FFFFFF",
-  border: "#E5D9C5",
-  text: "#3D2F25",
-  muted: "#8A7B6C",
-  yellow: "#F6D26B",
-  yellowDark: "#D6AE3A",
-  pillBg: "#FFF3C7",
-  error: "#C84646",
-};
+const COLORS = FRIDGE_COLORS;
 
 type ShelfKey = string;
 
@@ -44,6 +37,7 @@ const FridgeScreen: React.FC = () => {
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingItem, setEditingItem] = useState<FridgeItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -58,10 +52,10 @@ const FridgeScreen: React.FC = () => {
   }, []);
 
   useFocusEffect(
-  React.useCallback(() => {
-    load();
-  }, [load])
-);
+    React.useCallback(() => {
+      load();
+    }, [load])
+  );
 
   // Group into shelves; items without label go to "Uncategorized"
   const shelves: Shelf[] = useMemo(() => {
@@ -77,7 +71,6 @@ const FridgeScreen: React.FC = () => {
     }
 
     const labels = Object.keys(groups).sort((a, b) => {
-      // optional: keep "Uncategorized" at the end
       if (a === FALLBACK_LABEL) return 1;
       if (b === FALLBACK_LABEL) return -1;
       return a.localeCompare(b);
@@ -106,7 +99,6 @@ const FridgeScreen: React.FC = () => {
   };
 
   const handleEditorSubmit = async (values: ItemEditorValues) => {
-    // Same mapping style as GroceryScreen
     const { name, quantity, unit, label, expirationDate } = values;
 
     const payload = {
@@ -114,7 +106,6 @@ const FridgeScreen: React.FC = () => {
       quantity,
       unit,
       label: label ?? undefined,
-      // send ISO string or omit field if no expiration
       expirationDate: expirationDate
         ? expirationDate.toISOString()
         : undefined,
@@ -130,7 +121,6 @@ const FridgeScreen: React.FC = () => {
         );
       } else {
         const created = await fridgeApi.create(payload);
-        // prepend, like grocery
         setItems((prev) => [created, ...prev]);
       }
 
@@ -152,240 +142,202 @@ const FridgeScreen: React.FC = () => {
     }
   };
 
+  const handleClearFridge = async () => {
+    if (items.length === 0 || clearing) return;
+
+    try {
+      setClearing(true);
+      await Promise.all(items.map((item) => fridgeApi.remove(item._id)));
+      setItems([]);
+    } catch (err) {
+      console.error("Failed to clear fridge", err);
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  const totalWord = items.length === 1 ? "item" : "items";
+
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={COLORS.yellowDark} />
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={COLORS.yellowDark} />
+        </View>
+      </SafeAreaView>
     );
   }
 
+  const hasShelves = shelves.length > 0;
+
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {shelves.map((shelf) => (
-          <View key={shelf.label} style={styles.shelfContainer}>
-            <Text style={styles.shelfTitle}>{shelf.label}</Text>
-            <View style={styles.shelfBoard}>
-              {shelf.items.map((item) => (
-                <FridgeItemRow
-                  key={item._id}
-                  item={item}
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.screen}>
+        {/* Header (mirrors Grocery style) */}
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.pageTitle}>My Fridge</Text>
+            <Text style={styles.pageSubtitle}>
+              {items.length} {totalWord} in your fridge
+            </Text>
+          </View>
+
+          <View style={styles.headerActions}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.clearButton,
+                (clearing || items.length === 0) && styles.clearButtonDisabled,
+                pressed &&
+                !clearing &&
+                items.length !== 0 &&
+                styles.clearButtonPressed,
+              ]}
+              onPress={handleClearFridge}
+              disabled={clearing || items.length === 0}
+            >
+              {clearing ? (
+                <ActivityIndicator size="small" color={COLORS.muted} />
+              ) : (
+                <Text style={styles.clearButtonText}>Clear</Text>
+              )}
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Card container (matches Grocery) */}
+        <View style={styles.card}>
+          {hasShelves ? (
+            <ScrollView
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {shelves.map((shelf) => (
+                <FridgeShelf
+                  key={shelf.label}
+                  label={shelf.label}
+                  items={shelf.items}
                   onEdit={openEditModal}
                   onDelete={handleDelete}
                 />
               ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>Your fridge is empty!</Text>
+              <Text style={styles.emptyText}>
+                Check off items on your grocery list to add them here, or add
+                items manually.
+              </Text>
             </View>
-          </View>
-        ))}
+          )}
+        </View>
 
-        {shelves.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Your fridge is empty</Text>
-            <Text style={styles.emptyText}>
-              Check off items on your grocery list to add them here, or add
-              items manually.
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+        {/* Floating add button (same as Grocery FAB) */}
+        <Pressable style={styles.fab} onPress={openAddModal}>
+          <Ionicons name="add" size={30} color={COLORS.text} />
+        </Pressable>
 
-      {/* Floating add button */}
-      <Pressable style={styles.fab} onPress={openAddModal}>
-        <Ionicons name="add" size={28} color={COLORS.text} />
-      </Pressable>
-
-      {/* Shared Add/Edit modal */}
-      <ItemEditorModal
-        visible={editorVisible}
-        title={editingItem ? "Edit Fridge Item" : "Add Fridge Item"}
-        submitting={submitting}
-        onClose={handleEditorClose}
-        initialValues={{
-          name: editingItem?.name ?? "",
-          quantity: editingItem ? String(editingItem.quantity) : "1",
-          unit: editingItem?.unit ?? "piece",
-          label: editingItem?.label ?? null,
-          expirationDate: editingItem?.expirationDate
-            ? new Date(editingItem.expirationDate)
-            : null,
-        }}
-        onSubmit={handleEditorSubmit}
-      />
-    </View>
+        {/* Shared Add/Edit modal */}
+        <ItemEditorModal
+          visible={editorVisible}
+          title={editingItem ? "Edit Fridge Item" : "Add Fridge Item"}
+          submitting={submitting}
+          onClose={handleEditorClose}
+          initialValues={{
+            name: editingItem?.name ?? "",
+            quantity: editingItem ? String(editingItem.quantity) : "1",
+            unit: editingItem?.unit ?? "piece",
+            label: editingItem?.label ?? null,
+            expirationDate: editingItem?.expirationDate
+              ? new Date(editingItem.expirationDate)
+              : null,
+          }}
+          onSubmit={handleEditorSubmit}
+        />
+      </View>
+    </SafeAreaView>
   );
 };
 
 export default FridgeScreen;
 
-// ---------- Item row component ----------
-
-interface FridgeItemRowProps {
-  item: FridgeItem;
-  onEdit: (item: FridgeItem) => void;
-  onDelete: (item: FridgeItem) => void;
-}
-
-const FridgeItemRow: React.FC<FridgeItemRowProps> = ({
-  item,
-  onEdit,
-  onDelete,
-}) => {
-  const expiringSoon = isExpiringSoon(item.expirationDate);
-
-  return (
-    <View style={styles.itemRow}>
-      <View style={styles.iconContainer}>
-        {getFridgeIconForItem(item.name, item.label)}
-      </View>
-
-      <View style={styles.itemMain}>
-        <Text style={styles.itemName}>{item.name}</Text>
-
-        <View style={styles.itemMetaRow}>
-          <Text style={styles.itemMetaText}>
-            {item.quantity} {item.unit}
-          </Text>
-
-          {item.label && (
-            <View style={styles.labelPill}>
-              <Text style={styles.labelPillText}>{item.label}</Text>
-            </View>
-          )}
-        </View>
-
-        {item.expirationDate && (
-          <Text
-            style={[
-              styles.expirationText,
-              expiringSoon && styles.expirationTextWarning,
-            ]}
-          >
-            Expires {formatDate(item.expirationDate)}
-          </Text>
-        )}
-      </View>
-
-      <View style={styles.itemActions}>
-        <Pressable style={styles.iconButton} onPress={() => onEdit(item)}>
-          <Ionicons name="create-outline" size={20} color={COLORS.muted} />
-        </Pressable>
-        <Pressable style={styles.iconButton} onPress={() => onDelete(item)}>
-          <Ionicons name="trash-outline" size={20} color={COLORS.error} />
-        </Pressable>
-      </View>
-    </View>
-  );
-};
-
-// ---------- Helpers ----------
-
-function formatDate(raw?: string) {
-  if (!raw) return "";
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return raw;
-  return d.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-// within 3 days (including today), future only
-function isExpiringSoon(raw?: string) {
-  if (!raw) return false;
-  const now = new Date();
-  const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return false;
-  const diffMs = d.getTime() - now.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-  return diffDays >= 0 && diffDays <= 3;
-}
-
 // ---------- Styles ----------
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 80,
-  },
-  shelfContainer: {
-    marginBottom: 16,
-  },
-  shelfTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  shelfBoard: {
-    borderRadius: 18,
-    backgroundColor: COLORS.card,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingVertical: 4,
-  },
-  itemRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  iconContainer: {
-    marginRight: 10,
-  },
-  itemMain: {
+  screen: {
     flex: 1,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 0,
   },
-  itemName: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  itemMetaRow: {
+
+  // Header (mirrors Grocery)
+  headerRow: {
     flexDirection: "row",
-    alignItems: "center",
-    marginTop: 2,
-    gap: 6,
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 14,
   },
-  itemMetaText: {
+  pageTitle: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: COLORS.text,
+    letterSpacing: 0.3,
+  },
+  pageSubtitle: {
+    marginTop: 6,
     fontSize: 13,
     color: COLORS.muted,
   },
-  expirationText: {
-    marginTop: 2,
-    fontSize: 12,
-    color: COLORS.muted,
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
   },
-  expirationTextWarning: {
-    color: COLORS.error,
-    fontWeight: "500",
-  },
-  labelPill: {
-    backgroundColor: COLORS.pillBg,
+  clearButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
     borderWidth: 1,
     borderColor: COLORS.border,
+    backgroundColor: "#FFF8E8",
   },
-  labelPillText: {
-    fontSize: 11,
-    color: COLORS.text,
+  clearButtonDisabled: {
+    opacity: 0.4,
   },
-  itemActions: {
-    flexDirection: "row",
-    marginLeft: 8,
+  clearButtonPressed: {
+    opacity: 0.7,
   },
-  iconButton: {
-    padding: 6,
+  clearButtonText: {
+    fontSize: 13,
+    color: COLORS.muted,
   },
-  emptyState: {
+
+  // Card container
+  card: {
+    flex: 1,
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: "hidden",
+  },
+
+  // Scroll content (matches Grocery listContent)
+  listContent: {
+    paddingVertical: 6,
+    paddingBottom: 80,
+  },
+
+  // Empty state inside card
+  emptyContainer: {
+    flex: 1,
     alignItems: "center",
-    marginTop: 40,
+    justifyContent: "center",
     paddingHorizontal: 24,
   },
   emptyTitle: {
@@ -393,19 +345,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: COLORS.text,
     marginBottom: 6,
+    textAlign: "center",
   },
   emptyText: {
     fontSize: 14,
     color: COLORS.muted,
     textAlign: "center",
   },
+
   fab: {
     position: "absolute",
     right: 20,
-    bottom: 24,
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    bottom: 24, // same as Grocery
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: COLORS.yellow,
     alignItems: "center",
     justifyContent: "center",
@@ -415,6 +369,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
+
   center: {
     flex: 1,
     justifyContent: "center",

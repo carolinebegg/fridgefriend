@@ -53,6 +53,7 @@ const MISC_UNITS = [
   "case",
   "serving",
   "slice",
+  "unit",
 ];
 
 export interface ItemEditorValues {
