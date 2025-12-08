@@ -14,14 +14,8 @@ export function getFridgeIconForItem(
   let IconComponent: any = MaterialCommunityIcons;
   let iconName: string = "food-outline";
 
-  // ---------- DAIRY ----------
-  if (/(milk|cheese|cream|yogurt|butter)/.test(n) || l.includes("dairy")) {
-    IconComponent = MaterialCommunityIcons;
-    iconName = "cheese";
-  }
-
   // ---------- CHICKEN / POULTRY ----------
-  else if (/(chicken|drumstick|wing|nugget|tenders)/.test(n)) {
+  if (/(chicken|drumstick|wing|nugget|tenders)/.test(n)) {
     IconComponent = MaterialCommunityIcons;
     iconName = "food-drumstick";
   }
@@ -70,6 +64,12 @@ export function getFridgeIconForItem(
   } else if (/(popsicle|ice pop|fudgsicle)/.test(n)) {
     IconComponent = MaterialCommunityIcons;
     iconName = "ice-pop";
+  }
+
+  // ---------- DAIRY ----------
+  else if (/(milk|cheese|cream|yogurt|butter)/.test(n) || l.includes("dairy")) {
+    IconComponent = MaterialCommunityIcons;
+    iconName = "cheese";
   }
 
   // ---------- SNACKS ----------
