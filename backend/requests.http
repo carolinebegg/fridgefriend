@@ -1,0 +1,22 @@
+### Create a food item
+POST http://localhost:4000/api/food
+Content-Type: application/json
+
+{
+  "name": "Milk",
+  "quantity": 1,
+  "expiresAt": "2025-12-31"
+}
+
+### Get all food items
+GET http://localhost:4000/api/food
+
+### Create a test grocery item
+POST http://localhost:4000/api/test-grocery
+Content-Type: application/json
+
+{
+  "name": "Eggs",
+  "quantity": 12,
+  "expiresAt": "2025-11-30"
+}
