@@ -100,15 +100,17 @@ const FridgeScreen: React.FC = () => {
   };
 
   const handleEditorSubmit = async (values: ItemEditorValues) => {
-    const { name, quantity, unit, label, expirationDate } = values;
+    const quantity = values.quantity ?? 1;
+    const unit = values.unit?.trim() || "loaf";
 
     const payload = {
-      name,
+      name: values.name.trim(),
       quantity,
       unit,
-      label: label ?? undefined,
-      expirationDate: expirationDate
-        ? expirationDate.toISOString()
+      brand: values.brand?.trim() || undefined,
+      label: values.label ?? undefined,
+      expirationDate: values.expirationDate
+        ? values.expirationDate.toISOString()
         : undefined,
     };
 
@@ -189,9 +191,9 @@ const FridgeScreen: React.FC = () => {
                 styles.clearButton,
                 (clearing || items.length === 0) && styles.clearButtonDisabled,
                 pressed &&
-                !clearing &&
-                items.length !== 0 &&
-                styles.clearButtonPressed,
+                  !clearing &&
+                  items.length !== 0 &&
+                  styles.clearButtonPressed,
               ]}
               onPress={handleClearFridge}
               disabled={clearing || items.length === 0}
@@ -240,6 +242,7 @@ const FridgeScreen: React.FC = () => {
 
         {/* Shared Add/Edit modal */}
         <ItemEditorModal
+          context="fridge"
           visible={editorVisible}
           title={editingItem ? "Edit Fridge Item" : "Add Fridge Item"}
           submitting={submitting}
@@ -248,12 +251,33 @@ const FridgeScreen: React.FC = () => {
             name: editingItem?.name ?? "",
             quantity: editingItem ? String(editingItem.quantity) : "1",
             unit: editingItem?.unit ?? "loaf",
+            brand: editingItem?.brand ?? "",
             label: editingItem?.label ?? null,
             expirationDate: editingItem?.expirationDate
               ? new Date(editingItem.expirationDate)
               : null,
+            note: "", // fridge doesn't use notes
           }}
           onSubmit={handleEditorSubmit}
+          showCategory={true}
+          showExpiration={true}
+          showNote={false}
+          requireQuantity={true}
+          labelOptions={[
+            "Dairy",
+            "Grain",
+            "Meat",
+            "Produce",
+            "Snacks",
+            "Sweets",
+            "Beverages",
+            "Condiments",
+            "Spices",
+            "Canned",
+            "Frozen",
+            "Other",
+            "Takeout", // fridge-only
+          ]}
         />
       </View>
     </SafeAreaView>

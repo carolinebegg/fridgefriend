@@ -1,3 +1,4 @@
+// src/components/RecipeEditorModal.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
@@ -12,9 +13,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../styles/groceryStyles";
 import { Recipe, RecipeIngredient } from "../api/recipeApi";
-import IngredientEditorModal, {
-  IngredientEditorValues,
-} from "./IngredientEditorModal";
+import ItemEditorModal, {
+  ItemEditorValues,
+} from "../components/ItemEditorModal";
 
 export interface RecipeEditorValues {
   title: string;
@@ -26,8 +27,14 @@ export interface RecipeEditorValues {
   steps: string[];
 }
 
-interface IngredientRow extends RecipeIngredient {
+interface IngredientRow {
   id: string;
+  name: string;
+  quantity?: number;
+  unit?: string;
+  label?: string | null;
+  note?: string;
+  brand?: string;
 }
 
 interface RecipeEditorModalProps {
@@ -64,6 +71,7 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
     null
   );
 
+  // Populate state when opened / recipe changes
   useEffect(() => {
     if (!visible) return;
 
@@ -80,8 +88,10 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
         name: ing.name ?? "",
         quantity: ing.quantity,
         unit: ing.unit ?? "",
-        label: ing.label,
+        label: ing.label ?? null,
         note: ing.note ?? "",
+        // Brand isn't on RecipeIngredient yet; start blank.
+        brand: "",
       })
     );
     setIngredientRows(rows);
@@ -90,6 +100,7 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
     setEditingIngredientId(null);
   }, [visible, initialRecipe]);
 
+  // Map UI rows -> RecipeIngredient[] for API payload
   const parsedIngredients: RecipeIngredient[] = useMemo(() => {
     return ingredientRows
       .map((row) => {
@@ -103,8 +114,11 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
           name,
           quantity,
           unit: row.unit?.trim() || undefined,
+          label: row.label ?? undefined,
           note: row.note?.trim() || undefined,
-        };
+          // If/when you add `brand` to RecipeIngredient in recipeApi.ts,
+          // you can include: brand: row.brand?.trim() || undefined,
+        } as RecipeIngredient;
       })
       .filter(
         (row) =>
@@ -120,11 +134,23 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
     setIngredientEditorVisible(true);
   };
 
-  const handleIngredientSubmit = (values: IngredientEditorValues) => {
+  const handleIngredientSubmit = (values: ItemEditorValues) => {
+    const { name, quantity, unit, note, brand, label } = values;
+
     if (editingIngredientId) {
       setIngredientRows((prev) =>
         prev.map((row) =>
-          row.id === editingIngredientId ? { ...row, ...values } : row
+          row.id === editingIngredientId
+            ? {
+                ...row,
+                name,
+                quantity,
+                unit,
+                note,
+                brand,
+                label: label ?? row.label,
+              }
+            : row
         )
       );
     } else {
@@ -132,8 +158,13 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
         ...prev,
         {
           id: `${Date.now()}-${Math.random()}`,
-          ...values,
-        } as IngredientRow,
+          name,
+          quantity,
+          unit,
+          note,
+          brand,
+          label: label ?? null,
+        },
       ]);
     }
     setIngredientEditorVisible(false);
@@ -167,6 +198,28 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
   const editingIngredient = editingIngredientId
     ? ingredientRows.find((row) => row.id === editingIngredientId)
     : null;
+
+  const ingredientInitialValues = editingIngredient
+    ? {
+        name: editingIngredient.name ?? "",
+        quantity: editingIngredient.quantity
+          ? String(editingIngredient.quantity)
+          : "",
+        unit: editingIngredient.unit ?? "piece",
+        brand: editingIngredient.brand ?? "",
+        label: editingIngredient.label ?? null,
+        expirationDate: null, // recipes don't use expiration
+        note: editingIngredient.note ?? "",
+      }
+    : {
+        name: "",
+        quantity: "",
+        unit: "piece",
+        brand: "",
+        label: null,
+        expirationDate: null,
+        note: "",
+      };
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -324,31 +377,22 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
           </ScrollView>
         </View>
 
-        {/* Nested ingredient editor modal */}
-        <IngredientEditorModal
+        {/* Nested ingredient editor modal (using unified ItemEditorModal) */}
+        <ItemEditorModal
+          context="recipe"
           visible={ingredientEditorVisible}
-          initialValues={
-            editingIngredient
-              ? {
-                  name: editingIngredient.name ?? "",
-                  quantity: editingIngredient.quantity
-                    ? String(editingIngredient.quantity)
-                    : "",
-                  unit: editingIngredient.unit ?? "piece",
-                  note: editingIngredient.note ?? "",
-                }
-              : {
-                  name: "",
-                  quantity: "",
-                  unit: "piece",
-                  note: "",
-                }
-          }
+          title={editingIngredient ? "Edit Ingredient" : "Add Ingredient"}
+          submitting={false}
           onClose={() => {
             setIngredientEditorVisible(false);
             setEditingIngredientId(null);
           }}
+          initialValues={ingredientInitialValues}
           onSubmit={handleIngredientSubmit}
+          showCategory={true}    // stored for auto-populating grocery later
+          showExpiration={false} // recipes don't use expiration
+          showNote={true}
+          requireQuantity={false}
         />
       </View>
     </Modal>

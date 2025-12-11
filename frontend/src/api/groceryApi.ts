@@ -8,6 +8,7 @@ export interface GroceryItem {
   quantity: number;
   unit: string;
   label?: string;
+  brand?: string | null;
   isChecked: boolean;
   expirationDate?: string; // ISO string
 }
@@ -17,6 +18,7 @@ type CreateGroceryPayload = {
   quantity?: number;
   unit?: string;
   label?: string;
+  brand?: string;
   expirationDate?: string;
 };
 

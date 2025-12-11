@@ -16,7 +16,8 @@ export interface RecipeIngredient {
   name: string;
   quantity?: number;
   unit?: string;
-  label?: string;
+  brand?: string;  // NEW
+  label?: string;  // category
   note?: string;
   availability?: RecipeIngredientAvailability;
 }
@@ -28,6 +29,7 @@ export interface Recipe {
   photoUrl?: string;
   prepTimeMinutes?: number;
   cookTimeMinutes?: number;
+  TotalTimeMinutes?: number;
   ingredients: RecipeIngredient[];
   steps: string[];
   tags: string[];
@@ -42,6 +44,7 @@ type RecipePayload = {
   photoUrl?: string;
   prepTimeMinutes?: number;
   cookTimeMinutes?: number;
+  TotalTimeMinutes?: number;
   ingredients?: RecipeIngredient[];
   steps?: string[];
   tags?: string[];

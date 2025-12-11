@@ -1,4 +1,3 @@
-// src/utils/itemEditorPayload.ts
 import { ItemEditorValues } from "../components/ItemEditorModal";
 
 export interface ItemEditorPayload {
@@ -7,25 +6,22 @@ export interface ItemEditorPayload {
   unit: string;
   label?: string;
   expirationDate?: string;
+  brand?: string;
 }
 
-/**
- * Shared mapping from ItemEditorValues -> request payload for API.
- * Used by both Grocery and Fridge screens so behavior stays in sync.
- */
 export function editorValuesToPayload(
   values: ItemEditorValues
 ): ItemEditorPayload {
-  const { name, quantity, unit, label, expirationDate } = values;
+  const { name, quantity, unit, label, expirationDate, brand } = values;
 
   return {
     name,
-    quantity,
-    unit,
-    // we send undefined instead of null so backend can omit the field
+    quantity: quantity ?? 1,
+    unit: unit || "piece",
     label: label ?? undefined,
     expirationDate: expirationDate
       ? expirationDate.toISOString()
       : undefined,
+    brand: brand || undefined,
   };
 }

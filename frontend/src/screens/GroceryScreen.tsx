@@ -1,3 +1,4 @@
+// src/screens/GroceryScreen.tsx
 import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
@@ -73,7 +74,6 @@ const GroceryScreen: React.FC = () => {
 
     try {
       setClearing(true);
-      // Simple version: delete each item (can be replaced with a real "clear" endpoint)
       await Promise.all(items.map((item) => groceryApi.remove(item._id)));
       setItems([]);
     } catch (err) {
@@ -100,19 +100,21 @@ const GroceryScreen: React.FC = () => {
   };
 
   const handleEditorSubmit = async (values: ItemEditorValues) => {
-    const { name, quantity, unit, label, expirationDate } = values;
+    const quantity = values.quantity ?? 1;
+    const unit = values.unit?.trim() || "loaf";
 
     try {
       setSubmitting(true);
 
       if (editingItem) {
         const res = await groceryApi.update(editingItem._id, {
-          name,
+          name: values.name.trim(),
           quantity,
           unit,
-          label: label ?? undefined,
-          expirationDate: expirationDate
-            ? expirationDate.toISOString()
+          brand: values.brand?.trim() || undefined,
+          label: values.label ?? undefined,
+          expirationDate: values.expirationDate
+            ? values.expirationDate.toISOString()
             : undefined,
         });
         const updated = res.data;
@@ -121,12 +123,13 @@ const GroceryScreen: React.FC = () => {
         );
       } else {
         const res = await groceryApi.create({
-          name,
+          name: values.name.trim(),
           quantity,
           unit,
-          label: label ?? undefined,
-          expirationDate: expirationDate
-            ? expirationDate.toISOString()
+          brand: values.brand?.trim() || undefined,
+          label: values.label ?? undefined,
+          expirationDate: values.expirationDate
+            ? values.expirationDate.toISOString()
             : undefined,
         });
         setItems((prev) => [res.data, ...prev]);
@@ -141,107 +144,107 @@ const GroceryScreen: React.FC = () => {
     }
   };
 
-const renderItem = ({ item }: { item: GroceryItem }) => {
-  const expiringSoon = isExpiringSoon(item.expirationDate);
+  const renderItem = ({ item }: { item: GroceryItem }) => {
+    const expiringSoon = isExpiringSoon(item.expirationDate);
 
-  return (
-    <View style={styles.itemRowContainer}>
-      <Pressable
-        style={({ pressed }) => [
-          styles.itemRow,
-          pressed && styles.itemRowPressed,
-        ]}
-        onPress={() => handleToggle(item._id)}
-      >
-        {/* checkbox */}
+    return (
+      <View style={styles.itemRowContainer}>
         <Pressable
-          onPress={() => handleToggle(item._id)}
           style={({ pressed }) => [
-            styles.checkbox,
-            item.isChecked && styles.checkboxChecked,
-            pressed && styles.checkboxPressed,
+            styles.itemRow,
+            pressed && styles.itemRowPressed,
           ]}
-          hitSlop={6}
+          onPress={() => handleToggle(item._id)}
         >
-          {item.isChecked && (
-            <Ionicons
-              name="checkmark"
-              size={16}
-              color={COLORS.checkboxCheckmark}
-            />
-          )}
+          {/* checkbox */}
+          <Pressable
+            onPress={() => handleToggle(item._id)}
+            style={({ pressed }) => [
+              styles.checkbox,
+              item.isChecked && styles.checkboxChecked,
+              pressed && styles.checkboxPressed,
+            ]}
+            hitSlop={6}
+          >
+            {item.isChecked && (
+              <Ionicons
+                name="checkmark"
+                size={16}
+                color={COLORS.checkboxCheckmark}
+              />
+            )}
+          </Pressable>
+
+          {/* main text */}
+          <View style={styles.itemTextContainer}>
+            <Text
+              style={[
+                styles.itemName,
+                item.isChecked && styles.itemNameChecked,
+              ]}
+              numberOfLines={1}
+            >
+              {item.name}
+            </Text>
+            <Text
+              style={[
+                styles.itemDetail,
+                expiringSoon && styles.itemDetailExpiring,
+              ]}
+              numberOfLines={1}
+            >
+              {item.quantity} {item.unit}
+              {item.expirationDate
+                ? `  ·  Expires ${formatDate(item.expirationDate)}`
+                : ""}
+            </Text>
+          </View>
+
+          {/* vertical chip column: label on top, SOON below */}
+          <View style={styles.chipColumn}>
+            {item.label ? (
+              <View style={styles.labelPill}>
+                <Text style={styles.labelText}>{item.label}</Text>
+              </View>
+            ) : null}
+            {expiringSoon && (
+              <View style={styles.expiringPill}>
+                <Text style={styles.expiringPillText}>Soon</Text>
+              </View>
+            )}
+          </View>
+
+          {/* actions */}
+          <View style={styles.itemActions}>
+            <Pressable
+              onPress={() => openEditModal(item)}
+              style={({ pressed }) => [
+                styles.iconButton,
+                pressed && styles.iconButtonPressed,
+              ]}
+              hitSlop={8}
+            >
+              <Ionicons
+                name="create-outline"
+                size={20}
+                color={COLORS.iconMuted}
+              />
+            </Pressable>
+            <Pressable
+              onPress={() => handleDelete(item._id)}
+              style={({ pressed }) => [
+                styles.iconButton,
+                pressed && styles.iconButtonPressed,
+              ]}
+              hitSlop={8}
+            >
+              <Ionicons name="trash-outline" size={20} color={COLORS.delete} />
+            </Pressable>
+          </View>
         </Pressable>
-
-        {/* main text */}
-        <View style={styles.itemTextContainer}>
-          <Text
-            style={[
-              styles.itemName,
-              item.isChecked && styles.itemNameChecked,
-            ]}
-            numberOfLines={1}
-          >
-            {item.name}
-          </Text>
-          <Text
-            style={[
-              styles.itemDetail,
-              expiringSoon && styles.itemDetailExpiring,
-            ]}
-            numberOfLines={1}
-          >
-            {item.quantity} {item.unit}
-            {item.expirationDate
-              ? `  ·  Expires ${formatDate(item.expirationDate)}`
-              : ""}
-          </Text>
-        </View>
-
-        {/* vertical chip column: label on top, SOON below */}
-        <View style={styles.chipColumn}>
-          {item.label ? (
-            <View style={styles.labelPill}>
-              <Text style={styles.labelText}>{item.label}</Text>
-            </View>
-          ) : null}
-          {expiringSoon && (
-            <View style={styles.expiringPill}>
-              <Text style={styles.expiringPillText}>Soon</Text>
-            </View>
-          )}
-        </View>
-
-        {/* actions */}
-        <View style={styles.itemActions}>
-          <Pressable
-            onPress={() => openEditModal(item)}
-            style={({ pressed }) => [
-              styles.iconButton,
-              pressed && styles.iconButtonPressed,
-            ]}
-            hitSlop={8}
-          >
-            <Ionicons
-              name="create-outline"
-              size={20}
-              color={COLORS.iconMuted}
-            />
-          </Pressable>
-          <Pressable
-            onPress={() => handleDelete(item._id)}
-            style={({ pressed }) => [
-              styles.iconButton,
-              pressed && styles.iconButtonPressed,
-            ]}
-            hitSlop={8}
-          >
-            <Ionicons name="trash-outline" size={20} color={COLORS.delete} />
-          </Pressable>
-        </View>
-      </Pressable>
-    </View>
-  );
-};
+      </View>
+    );
+  };
 
   const remaining = items.filter((i) => !i.isChecked).length;
   const remainingWord = remaining === 1 ? "item" : "items";
@@ -255,8 +258,7 @@ const renderItem = ({ item }: { item: GroceryItem }) => {
           <View>
             <Text style={styles.pageTitle}>Grocery List</Text>
             <Text style={styles.pageSubtitle}>
-              {remaining} {remainingWord} left · {items.length}{" "}
-              {totalWord}
+              {remaining} {remainingWord} left · {items.length} {totalWord}
             </Text>
           </View>
 
@@ -315,6 +317,7 @@ const renderItem = ({ item }: { item: GroceryItem }) => {
 
       {/* Shared Add/Edit modal */}
       <ItemEditorModal
+        context="grocery"
         visible={editorVisible}
         title={editingItem ? "Edit Grocery Item" : "Add Grocery Item"}
         submitting={submitting}
@@ -323,12 +326,18 @@ const renderItem = ({ item }: { item: GroceryItem }) => {
           name: editingItem?.name ?? "",
           quantity: editingItem ? String(editingItem.quantity) : "1",
           unit: editingItem?.unit ?? "loaf",
+          brand: editingItem?.brand ?? "",
           label: editingItem?.label ?? null,
           expirationDate: editingItem?.expirationDate
             ? new Date(editingItem.expirationDate)
             : null,
+          note: "",
         }}
         onSubmit={handleEditorSubmit}
+        showCategory={true}
+        showExpiration={true}
+        showNote={false}
+        requireQuantity={true}
       />
     </SafeAreaView>
   );

@@ -8,6 +8,7 @@ export interface FridgeItem {
   quantity: number;
   unit: string;
   label?: string | null;
+  brand?: string | null;
   expirationDate?: string; // ISO string or undefined
 
   // optional extras (only if your backend sends them)
@@ -22,6 +23,7 @@ type CreateFridgePayload = {
   quantity: number;
   unit: string;
   label?: string;
+  brand?: string;
   expirationDate?: string; // ISO string, same as grocery
 };
 
