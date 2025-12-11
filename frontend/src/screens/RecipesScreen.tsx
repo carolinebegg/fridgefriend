@@ -28,21 +28,22 @@ export default function RecipesScreen() {
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (showLoading: boolean = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const data = await recipeApi.list(true);
       setRecipes(data);
     } catch (err) {
       console.error("Failed to load recipes", err);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      load();
+      // Silently refetch in background when tab is focused
+      load(false);
     }, [load])
   );
 
@@ -122,6 +123,8 @@ export default function RecipesScreen() {
           ? `${res.addedCount} item${res.addedCount === 1 ? "" : "s"} added or updated.`
           : "No ingredients to add."
       );
+      // Silently refetch recipes to update availability icons
+      await load(false);
     } catch (err) {
       console.error("Failed to add ingredients to grocery", err);
       Alert.alert("Oops", "Couldn't add ingredients right now.");
@@ -235,9 +238,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     overflow: "hidden",
+    marginBottom: 0,
   },
   listContent: {
-    paddingVertical: 10,
+    paddingVertical: 0,
+    paddingTop: 0,
     paddingBottom: 90,
   },
   emptyContainer: {

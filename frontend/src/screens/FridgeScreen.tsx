@@ -39,21 +39,22 @@ const FridgeScreen: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [clearing, setClearing] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (showLoading: boolean = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const data = await fridgeApi.list();
       setItems(data);
     } catch (err) {
       console.error("Failed to load fridge items", err);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, []);
 
   useFocusEffect(
     React.useCallback(() => {
-      load();
+      // Silently refetch in background when tab is focused
+      load(false);
     }, [load])
   );
 
@@ -246,7 +247,7 @@ const FridgeScreen: React.FC = () => {
           initialValues={{
             name: editingItem?.name ?? "",
             quantity: editingItem ? String(editingItem.quantity) : "1",
-            unit: editingItem?.unit ?? "piece",
+            unit: editingItem?.unit ?? "loaf",
             label: editingItem?.label ?? null,
             expirationDate: editingItem?.expirationDate
               ? new Date(editingItem.expirationDate)

@@ -24,15 +24,15 @@ const GroceryScreen: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [clearing, setClearing] = useState(false);
 
-  const fetchGroceries = useCallback(async () => {
+  const fetchGroceries = useCallback(async (showLoading: boolean = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const res = await groceryApi.getAll();
       setItems(res.data);
     } catch (err) {
       console.error("Failed to load groceries", err);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, []);
 
@@ -42,7 +42,8 @@ const GroceryScreen: React.FC = () => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchGroceries();
+      // Silently refetch in background when tab is focused
+      fetchGroceries(false);
     }, [fetchGroceries])
   );
 
@@ -321,7 +322,7 @@ const renderItem = ({ item }: { item: GroceryItem }) => {
         initialValues={{
           name: editingItem?.name ?? "",
           quantity: editingItem ? String(editingItem.quantity) : "1",
-          unit: editingItem?.unit ?? "piece",
+          unit: editingItem?.unit ?? "loaf",
           label: editingItem?.label ?? null,
           expirationDate: editingItem?.expirationDate
             ? new Date(editingItem.expirationDate)

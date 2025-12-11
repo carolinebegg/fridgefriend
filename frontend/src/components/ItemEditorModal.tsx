@@ -208,7 +208,7 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({
               <View style={[styles.modalHalf, styles.unitInputRow]}>
                 <TextInput
                   style={[styles.modalInput, styles.unitTextInput]}
-                  placeholder="piece"
+                  placeholder="loaf"
                   value={unit}
                   onChangeText={setUnit}
                 />

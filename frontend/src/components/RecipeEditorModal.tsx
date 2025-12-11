@@ -8,8 +8,8 @@ import {
   ScrollView,
   StyleSheet,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../styles/groceryStyles";
 import { Recipe, RecipeIngredient } from "../api/recipeApi";
 import IngredientEditorModal, {
@@ -47,16 +47,22 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const insets = useSafeAreaInsets();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [prepTime, setPrepTime] = useState("");
   const [cookTime, setCookTime] = useState("");
   const [stepsText, setStepsText] = useState("");
-  const [ingredientRows, setIngredientRows] = useState<IngredientRow[]>(EMPTY_ROWS);
+  const [ingredientRows, setIngredientRows] =
+    useState<IngredientRow[]>(EMPTY_ROWS);
 
-  const [ingredientEditorVisible, setIngredientEditorVisible] = useState(false);
-  const [editingIngredientId, setEditingIngredientId] = useState<string | null>(null);
+  const [ingredientEditorVisible, setIngredientEditorVisible] =
+    useState(false);
+  const [editingIngredientId, setEditingIngredientId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     if (!visible) return;
@@ -68,44 +74,44 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
     setCookTime(initialRecipe?.cookTimeMinutes?.toString() ?? "");
     setStepsText((initialRecipe?.steps || []).join("\n"));
 
-    const rows = (initialRecipe?.ingredients || []).map((ing, idx) => ({
-  id: `${idx}-${ing.name ?? idx}`,
-  name: ing.name ?? "",
-  quantity: ing.quantity,
-  unit: ing.unit ?? "",
-  label: ing.label,
-  note: ing.note ?? "",
-}));
-setIngredientRows(rows);
-
+    const rows: IngredientRow[] = (initialRecipe?.ingredients || []).map(
+      (ing, idx) => ({
+        id: `${idx}-${ing.name ?? idx}`,
+        name: ing.name ?? "",
+        quantity: ing.quantity,
+        unit: ing.unit ?? "",
+        label: ing.label,
+        note: ing.note ?? "",
+      })
+    );
+    setIngredientRows(rows);
 
     setIngredientEditorVisible(false);
     setEditingIngredientId(null);
   }, [visible, initialRecipe]);
 
   const parsedIngredients: RecipeIngredient[] = useMemo(() => {
-  return ingredientRows
-    .map((row) => {
-      const name = (row.name ?? "").trim();
-      const quantity =
-        row.quantity !== undefined && row.quantity !== null
-          ? Number(row.quantity)
-          : undefined;
+    return ingredientRows
+      .map((row) => {
+        const name = (row.name ?? "").trim();
+        const quantity =
+          row.quantity !== undefined && row.quantity !== null
+            ? Number(row.quantity)
+            : undefined;
 
-      return {
-        name,
-        quantity,
-        unit: row.unit?.trim() || undefined,
-        note: row.note?.trim() || undefined,
-      };
-    })
-    .filter(
-      (row) =>
-        row.name.length > 0 &&
-        (row.quantity === undefined || !Number.isNaN(row.quantity))
-    );
-}, [ingredientRows]);
-
+        return {
+          name,
+          quantity,
+          unit: row.unit?.trim() || undefined,
+          note: row.note?.trim() || undefined,
+        };
+      })
+      .filter(
+        (row) =>
+          row.name.length > 0 &&
+          (row.quantity === undefined || !Number.isNaN(row.quantity))
+      );
+  }, [ingredientRows]);
 
   const canSubmit = title.trim().length > 0 && !submitting;
 
@@ -118,9 +124,7 @@ setIngredientRows(rows);
     if (editingIngredientId) {
       setIngredientRows((prev) =>
         prev.map((row) =>
-          row.id === editingIngredientId
-            ? { ...row, ...values }
-            : row
+          row.id === editingIngredientId ? { ...row, ...values } : row
         )
       );
     } else {
@@ -129,7 +133,7 @@ setIngredientRows(rows);
         {
           id: `${Date.now()}-${Math.random()}`,
           ...values,
-        },
+        } as IngredientRow,
       ]);
     }
     setIngredientEditorVisible(false);
@@ -166,155 +170,187 @@ setIngredientRows(rows);
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <Pressable hitSlop={12} onPress={onClose} disabled={submitting}>
-            <Ionicons name="close" size={24} color={COLORS.text} />
-          </Pressable>
-          <Text style={styles.title}>{initialRecipe ? "Edit recipe" : "New recipe"}</Text>
-          <Pressable
-            onPress={handleSubmit}
-            disabled={!canSubmit}
-            style={[styles.saveButton, !canSubmit && styles.saveButtonDisabled]}
-          >
-            <Text style={styles.saveButtonText}>{initialRecipe ? "Save" : "Add"}</Text>
-          </Pressable>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.label}>Title *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Grandma's lasagna"
-            value={title}
-            onChangeText={setTitle}
-          />
-
-          <Text style={styles.label}>Description</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="A short description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-
-          <Text style={styles.label}>Photo URL</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="https://..."
-            value={photoUrl}
-            onChangeText={setPhotoUrl}
-            autoCapitalize="none"
-          />
-
-          <View style={styles.row}>
-            <View style={styles.half}>
-              <Text style={styles.label}>Prep time (min)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="15"
-                keyboardType="numeric"
-                value={prepTime}
-                onChangeText={setPrepTime}
-              />
-            </View>
-            <View style={styles.spacer} />
-            <View style={styles.half}>
-              <Text style={styles.label}>Cook time (min)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="30"
-                keyboardType="numeric"
-                value={cookTime}
-                onChangeText={setCookTime}
-              />
-            </View>
-          </View>
-
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Ingredients</Text>
+      {/* Root view padded by real safe-area insets */}
+      <View
+        style={[
+          styles.safeArea,
+          { paddingTop: insets.top, paddingBottom: insets.bottom },
+        ]}
+      >
+        <View style={styles.screen}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Pressable hitSlop={12} onPress={onClose} disabled={submitting}>
+              <Ionicons name="close" size={24} color={COLORS.text} />
+            </Pressable>
+            <Text style={styles.title}>
+              {initialRecipe ? "Edit recipe" : "New recipe"}
+            </Text>
             <Pressable
-              style={({ pressed }) => [
-                styles.addIngButton,
-                pressed && styles.addIngButtonPressed,
-              ]}
-              onPress={() => openIngredientEditor()}
+              onPress={handleSubmit}
+              disabled={!canSubmit}
+              style={[styles.saveButton, !canSubmit && styles.saveButtonDisabled]}
             >
-              <Ionicons name="add" size={18} color={COLORS.text} />
-              <Text style={styles.addIngButtonText}>Add</Text>
+              <Text style={styles.saveButtonText}>
+                {initialRecipe ? "Save" : "Add"}
+              </Text>
             </Pressable>
           </View>
 
-          <View style={styles.ingredientsList}>
-            {ingredientRows.length === 0 ? (
-              <Text style={styles.emptyText}>No ingredients yet.</Text>
-            ) : (
-              ingredientRows.map((row) => (
-                <View key={row.id} style={styles.ingredientItem}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.ingredientName}>{row.name}</Text>
-                    <Text style={styles.ingredientMeta}>
-                      {row.quantity && row.unit
-                        ? `${row.quantity} ${row.unit}`
-                        : row.quantity
-                        ? `${row.quantity}`
-                        : row.unit
-                        ? row.unit
-                        : "No quantity"}
-                      {row.note ? ` · ${row.note}` : ""}
-                    </Text>
-                  </View>
-                  <View style={styles.ingredientActions}>
-                    <Pressable
-                      onPress={() => openIngredientEditor(row.id)}
-                      hitSlop={8}
-                    >
-                      <Ionicons name="create-outline" size={18} color={COLORS.muted} />
-                    </Pressable>
-                    <Pressable
-                      onPress={() => removeRow(row.id)}
-                      hitSlop={8}
-                      style={{ marginLeft: 8 }}
-                    >
-                      <Ionicons name="trash-outline" size={18} color={COLORS.delete} />
-                    </Pressable>
-                  </View>
-                </View>
-              ))
-            )}
-          </View>
+          {/* Body */}
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={styles.label}>Title *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Grandma's lasagna"
+              value={title}
+              onChangeText={setTitle}
+            />
 
-          <Text style={styles.sectionTitle}>Instructions</Text>
-          <TextInput
-            style={[styles.input, styles.textArea, { minHeight: 140 }]}
-            placeholder="Write each step on a new line"
-            value={stepsText}
-            onChangeText={setStepsText}
-            multiline
-          />
-        </ScrollView>
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="A short description"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+            />
 
+            <Text style={styles.label}>Photo URL</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="https://..."
+              value={photoUrl}
+              onChangeText={setPhotoUrl}
+              autoCapitalize="none"
+            />
+
+            <View style={styles.row}>
+              <View style={styles.half}>
+                <Text style={styles.label}>Prep time (min)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="15"
+                  keyboardType="numeric"
+                  value={prepTime}
+                  onChangeText={setPrepTime}
+                />
+              </View>
+              <View style={styles.spacer} />
+              <View style={styles.half}>
+                <Text style={styles.label}>Cook time (min)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="30"
+                  keyboardType="numeric"
+                  value={cookTime}
+                  onChangeText={setCookTime}
+                />
+              </View>
+            </View>
+
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Ingredients</Text>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.addIngButton,
+                  pressed && styles.addIngButtonPressed,
+                ]}
+                onPress={() => openIngredientEditor()}
+              >
+                <Ionicons name="add" size={18} color={COLORS.text} />
+                <Text style={styles.addIngButtonText}>Add</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.ingredientsList}>
+              {ingredientRows.length === 0 ? (
+                <Text style={styles.emptyText}>No ingredients yet.</Text>
+              ) : (
+                ingredientRows.map((row) => (
+                  <View key={row.id} style={styles.ingredientItem}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.ingredientName}>{row.name}</Text>
+                      <Text style={styles.ingredientMeta}>
+                        {row.quantity && row.unit
+                          ? `${row.quantity} ${row.unit}`
+                          : row.quantity
+                          ? `${row.quantity}`
+                          : row.unit
+                          ? row.unit
+                          : "No quantity"}
+                        {row.note ? ` · ${row.note}` : ""}
+                      </Text>
+                    </View>
+                    <View style={styles.ingredientActions}>
+                      <Pressable
+                        onPress={() => openIngredientEditor(row.id)}
+                        hitSlop={8}
+                      >
+                        <Ionicons
+                          name="create-outline"
+                          size={18}
+                          color={COLORS.muted}
+                        />
+                      </Pressable>
+                      <Pressable
+                        onPress={() => removeRow(row.id)}
+                        hitSlop={8}
+                        style={{ marginLeft: 8 }}
+                      >
+                        <Ionicons
+                          name="trash-outline"
+                          size={18}
+                          color={COLORS.delete}
+                        />
+                      </Pressable>
+                    </View>
+                  </View>
+                ))
+              )}
+            </View>
+
+            <Text style={styles.sectionTitle}>Instructions</Text>
+            <TextInput
+              style={[styles.input, styles.textArea, { minHeight: 140 }]}
+              placeholder="Write each step on a new line"
+              value={stepsText}
+              onChangeText={setStepsText}
+              multiline
+            />
+          </ScrollView>
+        </View>
+
+        {/* Nested ingredient editor modal */}
         <IngredientEditorModal
           visible={ingredientEditorVisible}
-          initialValues={editingIngredient ? {
-            name: editingIngredient.name ?? "",
-            quantity: editingIngredient.quantity ? String(editingIngredient.quantity) : "",
-            unit: editingIngredient.unit ?? "piece",
-            note: editingIngredient.note ?? "",
-          } : {
-            name: "",
-            quantity: "",
-            unit: "piece",
-            note: "",
-          }}
+          initialValues={
+            editingIngredient
+              ? {
+                  name: editingIngredient.name ?? "",
+                  quantity: editingIngredient.quantity
+                    ? String(editingIngredient.quantity)
+                    : "",
+                  unit: editingIngredient.unit ?? "piece",
+                  note: editingIngredient.note ?? "",
+                }
+              : {
+                  name: "",
+                  quantity: "",
+                  unit: "piece",
+                  note: "",
+                }
+          }
           onClose={() => {
             setIngredientEditorVisible(false);
             setEditingIngredientId(null);
           }}
           onSubmit={handleIngredientSubmit}
         />
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 };
@@ -326,12 +362,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+  screen: {
+    flex: 1,
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    paddingBottom: 0,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
@@ -354,7 +395,7 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   content: {
-    paddingHorizontal: 18,
+    paddingTop: 12,
     paddingBottom: 120,
   },
   label: {
