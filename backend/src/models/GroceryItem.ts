@@ -1,7 +1,7 @@
 // src/models/GroceryItem.ts
 import { Schema, model, Document, Types } from "mongoose";
 
-// If you want to share Unit between grocery + fridge:
+// Shared unit type
 export type Unit =
   | "ml"
   | "l"
@@ -37,9 +37,24 @@ export type Unit =
 
 export interface IGroceryItem extends Document {
   user: Types.ObjectId;
+
+  // Link to canonical product
+  pantryItem: Types.ObjectId;
+
+  // Display name
   name: string;
+
+  // Normalized key (e.g. lowercased, trimmed)
+  nameKey: string;
+
   quantity: number;
   unit: Unit;
+
+  /**
+   * Optional brand for this specific grocery entry.
+   * Can mirror or override PantryItem.brand.
+   */
+  brand?: string | null;
 
   /**
    * Category label like "Dairy", "Meat", "Produce", etc.
@@ -70,32 +85,59 @@ const groceryItemSchema = new Schema<IGroceryItem>(
       required: true,
       index: true,
     },
+
+    pantryItem: {
+      type: Schema.Types.ObjectId,
+      ref: "PantryItem",
+      required: true,
+      index: true,
+    },
+
     name: {
       type: String,
       required: true,
       trim: true,
     },
+
+    nameKey: {
+      type: String,
+      required: true,
+      index: true,
+      trim: true,
+    },
+
     quantity: {
       type: Number,
       required: true,
       min: 0,
     },
+
     unit: {
       type: String,
       required: true,
       trim: true,
     },
+
+    brand: {
+      type: String,
+      required: false,
+      default: null,
+      trim: true,
+    },
+
     label: {
       type: String,
       required: false,
-      default: null, // <- nullable field
+      default: null, // nullable field
       trim: true,
     },
+
     expirationDate: {
       type: Date,
       required: false,
-      default: null, // <- nullable field
+      default: null, // nullable field
     },
+
     isChecked: {
       type: Boolean,
       required: true,

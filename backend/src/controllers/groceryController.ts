@@ -15,9 +15,9 @@ export const groceryController = {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const { name, quantity, unit, label, expirationDate } = req.body;
+      const { name, quantity, unit, label, brand, expirationDate } = req.body;
 
-      if (!name) {
+      if (!name || !String(name).trim()) {
         return res.status(400).json({ message: "Name is required" });
       }
 
@@ -26,12 +26,14 @@ export const groceryController = {
         quantity?: number;
         unit?: string;
         label?: string | null;
+        brand?: string | null;
         expirationDate?: Date | null;
       } = {
         name,
         quantity,
         unit,
         label,
+        brand,
       };
 
       if (expirationDate !== undefined) {
@@ -51,21 +53,36 @@ export const groceryController = {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const id = req.params.id as string;  // ✅ cast
+      const { id } = req.params as { id?: string };
+      if (!id) {
+        return res.status(400).json({ message: "Grocery item id is required" });
+      }
 
-      const { name, quantity, unit, label, expirationDate } = req.body;
+      const {
+        name,
+        quantity,
+        unit,
+        label,
+        brand,
+        expirationDate,
+        isChecked,
+      } = req.body;
 
       const payload: {
         name?: string;
         quantity?: number;
         unit?: string;
         label?: string | null;
+        brand?: string | null;
         expirationDate?: Date | null;
+        isChecked?: boolean;
       } = {
         name,
         quantity,
         unit,
         label,
+        brand,
+        isChecked,
       };
 
       if (expirationDate !== undefined) {
@@ -93,7 +110,12 @@ export const groceryController = {
 
   async remove(req: AuthRequest, res: Response) {
     try {
-      const id = req.params.id as string;  // ✅ cast
+      const { id } = req.params as { id?: string };
+      if (!id) {
+        return res
+          .status(400)
+          .json({ message: "Grocery item id is required" });
+      }
 
       const deleted = await groceryService.deleteForUser(req.userId!, id);
 
@@ -110,7 +132,12 @@ export const groceryController = {
 
   async toggle(req: AuthRequest, res: Response) {
     try {
-      const id = req.params.id as string;  // ✅ cast
+      const { id } = req.params as { id?: string };
+      if (!id) {
+        return res
+          .status(400)
+          .json({ message: "Grocery item id is required" });
+      }
 
       const item = await groceryService.toggleForUser(req.userId!, id);
 

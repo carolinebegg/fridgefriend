@@ -1,6 +1,16 @@
-// src/dao/fridgeDao.ts
 import { Types } from "mongoose";
 import { FridgeItem, IFridgeItem } from "../models/FridgeItem";
+
+export type FridgeManualCreateData = {
+  pantryItem: Types.ObjectId;
+  name: string;
+  nameKey: string;
+  quantity: number;
+  unit: string;
+  label?: string | null;
+  brand?: string | null;
+  expirationDate?: Date | null;
+};
 
 export const fridgeDao = {
   async findByUser(userId: string) {
@@ -8,34 +18,22 @@ export const fridgeDao = {
     return FridgeItem.find({ user: userObjectId }).sort({ createdAt: 1 });
   },
 
-  async createManualForUser(
-    userId: string,
-    data: {
-      name: string;
-      quantity: number;
-      unit: string;
-      label?: string | null;
-      // expiration is optional, matching the model + grocery behavior
-      expirationDate?: Date | null;
-    }
-  ) {
+  async createManualForUser(userId: string, data: FridgeManualCreateData) {
     const userObjectId = new Types.ObjectId(userId);
 
     const doc: Partial<IFridgeItem> & { user: Types.ObjectId } = {
       user: userObjectId,
+      pantryItem: data.pantryItem,
       name: data.name.trim(),
+      nameKey: data.nameKey,
       quantity: data.quantity,
       unit: data.unit.trim(),
-      // optional expiration date
       expirationDate: data.expirationDate ?? null,
       addedManually: true,
+      label: data.label ?? null,
+      brand: data.brand ?? null,
     };
 
-    if (data.label && data.label.trim() !== "") {
-      doc.label = data.label.trim();
-    }
-
-    // cast to any to satisfy Mongoose's overloaded create typing
     return FridgeItem.create(doc as any);
   },
 
@@ -71,28 +69,30 @@ export const fridgeDao = {
   async createFromGrocery(grocery: {
     user: any;
     _id: any;
+    pantryItem: any;
     name: string;
+    nameKey: string;
     quantity: number;
     unit: string;
     label?: string | null;
+    brand?: string | null;
     expirationDate?: Date | null;
   }) {
     const doc: Partial<IFridgeItem> = {
       // user and addedFromGroceryItem come directly from grocery
       // @ts-ignore – user is ObjectId in schema
       user: grocery.user,
+      pantryItem: grocery.pantryItem,
       name: grocery.name,
+      nameKey: grocery.nameKey,
       quantity: grocery.quantity,
       unit: grocery.unit,
-      // match grocery behavior: expirationDate is optional / nullable
       expirationDate: grocery.expirationDate ?? null,
       addedFromGroceryItem: grocery._id,
       addedManually: false,
+      label: grocery.label ?? null,
+      brand: grocery.brand ?? null,
     };
-
-    if (grocery.label && grocery.label.trim() !== "") {
-      doc.label = grocery.label.trim();
-    }
 
     return FridgeItem.create(doc as any);
   },

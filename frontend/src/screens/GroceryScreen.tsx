@@ -13,6 +13,7 @@ import ItemEditorModal, {
   ItemEditorValues,
 } from "../components/ItemEditorModal";
 import { groceryStyles as styles, COLORS } from "../styles/groceryStyles";
+import { useFocusEffect } from "@react-navigation/native";
 
 const GroceryScreen: React.FC = () => {
   const [items, setItems] = useState<GroceryItem[]>([]);
@@ -38,6 +39,12 @@ const GroceryScreen: React.FC = () => {
   useEffect(() => {
     fetchGroceries();
   }, [fetchGroceries]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchGroceries();
+    }, [fetchGroceries])
+  );
 
   const handleToggle = async (id: string) => {
     try {

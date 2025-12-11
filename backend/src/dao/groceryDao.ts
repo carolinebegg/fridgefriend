@@ -1,45 +1,44 @@
 import { Types } from "mongoose";
 import { GroceryItem, IGroceryItem } from "../models/GroceryItem";
 
+export type GroceryCreateData = {
+  pantryItem: Types.ObjectId;
+  name: string;
+  nameKey: string;
+  quantity: number;
+  unit: string;
+  label?: string | null;
+  brand?: string | null;
+  expirationDate?: Date | null;
+  isChecked?: boolean;
+};
+
 export const groceryDao = {
   async findByUser(userId: string) {
     const userObjectId = new Types.ObjectId(userId);
     return GroceryItem.find({ user: userObjectId }).sort({ createdAt: -1 });
   },
 
-  async createForUser(
-    userId: string,
-    data: {
-      name: string;
-      quantity: number;
-      unit: string;
-      label?: string | null;
-      expirationDate?: Date | null;
-    }
-  ) {
+  async createForUser(userId: string, data: GroceryCreateData): Promise<IGroceryItem> {
     const userObjectId = new Types.ObjectId(userId);
 
-    const doc: Partial<IGroceryItem> & {
-        user: Types.ObjectId;
-        name: string;
-        quantity: number;
-        unit: string;
-    } = {
-        user: userObjectId,
-        name: String(data.name).trim(),
-        quantity: data.quantity,
-        unit: data.unit,
+    const doc: Partial<IGroceryItem> & { user: Types.ObjectId } = {
+      user: userObjectId,
+      pantryItem: data.pantryItem,
+      name: String(data.name).trim(),
+      nameKey: data.nameKey,
+      quantity: data.quantity,
+      unit: data.unit.trim(),
+      isChecked: data.isChecked ?? false,
+      expirationDate: data.expirationDate ?? null,
+      label: data.label ?? null,
+      brand: data.brand ?? null,
     };
 
-    if (data.label !== undefined) {
-        doc.label = data.label; // string | null
-    }
-
-    if (data.expirationDate !== undefined) {
-        doc.expirationDate = data.expirationDate; // Date | null
-    }
-
-    return GroceryItem.create(doc as any);
+    // 👇 use `new` + `save` to avoid the array overloads on `create`
+    const instance = new GroceryItem(doc as any);
+    const created = await instance.save();
+    return created as IGroceryItem;
   },
 
   async findOneByIdAndUser(id: string, userId: string) {

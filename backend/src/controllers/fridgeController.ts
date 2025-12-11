@@ -1,4 +1,3 @@
-// src/controllers/fridgeController.ts
 import { Response } from "express";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { fridgeService } from "../services/fridgeService";
@@ -16,9 +15,9 @@ export const fridgeController = {
 
   async create(req: AuthRequest, res: Response) {
     try {
-      const { name, quantity, unit, label, expirationDate } = req.body;
+      const { name, quantity, unit, label, brand, expirationDate } = req.body;
 
-      if (!name) {
+      if (!name || !String(name).trim()) {
         return res.status(400).json({ message: "Name is required" });
       }
 
@@ -27,12 +26,14 @@ export const fridgeController = {
         quantity?: number;
         unit?: string;
         label?: string | null;
+        brand?: string | null;
         expirationDate?: Date | null;
       } = {
         name,
         quantity,
         unit,
         label,
+        brand,
       };
 
       if (expirationDate !== undefined) {
@@ -55,20 +56,26 @@ export const fridgeController = {
 
   async update(req: AuthRequest, res: Response) {
     try {
-      const id = req.params.id as string;
-      const { name, quantity, unit, label, expirationDate } = req.body;
+      const { id } = req.params as { id?: string };
+      if (!id) {
+        return res.status(400).json({ message: "Fridge item id is required" });
+      }
+
+      const { name, quantity, unit, label, brand, expirationDate } = req.body;
 
       const payload: {
         name?: string;
         quantity?: number;
         unit?: string;
         label?: string | null;
+        brand?: string | null;
         expirationDate?: Date | null;
       } = {
         name,
         quantity,
         unit,
         label,
+        brand,
       };
 
       if (expirationDate !== undefined) {
@@ -96,7 +103,10 @@ export const fridgeController = {
 
   async remove(req: AuthRequest, res: Response) {
     try {
-      const id = req.params.id as string;
+      const { id } = req.params as { id?: string };
+      if (!id) {
+        return res.status(400).json({ message: "Fridge item id is required" });
+      }
 
       const deleted = await fridgeService.deleteForUser(req.userId!, id);
 

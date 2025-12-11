@@ -4,9 +4,24 @@ import { Unit } from "./GroceryItem";
 
 export interface IFridgeItem extends Document {
   user: Types.ObjectId;
+
+  // Link to canonical product
+  pantryItem: Types.ObjectId;
+
+  // Display name
   name: string;
+
+  // Normalized key
+  nameKey: string;
+
   quantity: number;
   unit: Unit;
+
+  /**
+   * Optional brand for this specific fridge entry.
+   * Can mirror or override PantryItem.brand.
+   */
+  brand?: string | null;
 
   /**
    * Category label like "Dairy", "Meat", "Produce", etc.
@@ -44,38 +59,66 @@ const fridgeItemSchema = new Schema<IFridgeItem>(
       required: true,
       index: true,
     },
+
+    pantryItem: {
+      type: Schema.Types.ObjectId,
+      ref: "PantryItem",
+      required: true,
+      index: true,
+    },
+
     name: {
       type: String,
       required: true,
       trim: true,
     },
+
+    nameKey: {
+      type: String,
+      required: true,
+      index: true,
+      trim: true,
+    },
+
     quantity: {
       type: Number,
       required: true,
       min: 0,
     },
+
     unit: {
       type: String,
       required: true,
       trim: true,
     },
+
+    brand: {
+      type: String,
+      required: false,
+      default: null,
+      trim: true,
+    },
+
     label: {
       type: String,
       required: false,
       default: null, // nullable, same as grocery
       trim: true,
     },
+
     expirationDate: {
       type: Date,
       required: false,
       default: null, // nullable, same as grocery
     },
+
     addedFromGroceryItem: {
       type: Schema.Types.ObjectId,
       ref: "GroceryItem",
       required: false,
       default: null,
     },
+
     addedManually: {
       type: Boolean,
       required: true,
