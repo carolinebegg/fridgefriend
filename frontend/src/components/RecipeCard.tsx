@@ -18,6 +18,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   onAddToGrocery,
 }) => {
   const { prepTimeMinutes, cookTimeMinutes } = recipe;
+  const totalTimeMinutes = (prepTimeMinutes || 0) + (cookTimeMinutes || 0);
 
   return (
     <View style={styles.card}>
@@ -50,20 +51,30 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
       </View>
 
       {(prepTimeMinutes || cookTimeMinutes) && (
-        <View style={styles.metaRow}>
-          {prepTimeMinutes ? (
-            <View style={styles.pill}>
-              <Ionicons name="timer-outline" size={14} color={COLORS.text} />
-              <Text style={styles.pillText}>Prep {prepTimeMinutes}m</Text>
+        <>
+          <View style={styles.metaRow}>
+            {prepTimeMinutes ? (
+              <View style={styles.pill}>
+                <Ionicons name="timer-outline" size={14} color={COLORS.text} />
+                <Text style={styles.pillText}>Prep {prepTimeMinutes}m</Text>
+              </View>
+            ) : null}
+            {cookTimeMinutes ? (
+              <View style={styles.pill}>
+                <Ionicons name="flame-outline" size={14} color={COLORS.text} />
+                <Text style={styles.pillText}>Cook {cookTimeMinutes}m</Text>
+              </View>
+            ) : null}
+          </View>
+          {totalTimeMinutes > 0 ? (
+            <View style={styles.totalTimeRow}>
+              <View style={[styles.pill, styles.totalTimePill]}>
+                <Ionicons name="time-outline" size={14} color={COLORS.text} />
+                <Text style={styles.pillText}>Total {totalTimeMinutes}m</Text>
+              </View>
             </View>
           ) : null}
-          {cookTimeMinutes ? (
-            <View style={styles.pill}>
-              <Ionicons name="flame-outline" size={14} color={COLORS.text} />
-              <Text style={styles.pillText}>Cook {cookTimeMinutes}m</Text>
-            </View>
-          ) : null}
-        </View>
+        </>
       )}
 
       <View style={styles.sectionHeader}>
@@ -176,6 +187,10 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: "row",
     marginTop: 10,
+    marginBottom: 4,
+  },
+  totalTimeRow: {
+    flexDirection: "row",
     marginBottom: 6,
   },
   pill: {
@@ -188,6 +203,10 @@ const styles = StyleSheet.create({
     marginRight: 8,
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+  totalTimePill: {
+    backgroundColor: COLORS.yellow,
+    borderColor: COLORS.yellowDark,
   },
   pillText: {
     marginLeft: 4,

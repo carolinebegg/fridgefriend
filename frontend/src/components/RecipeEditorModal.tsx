@@ -27,7 +27,7 @@ export interface RecipeEditorValues {
   steps: string[];
 }
 
-interface IngredientRow {
+export interface IngredientRow {
   id: string;
   name: string;
   quantity?: number;

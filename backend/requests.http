@@ -20,3 +20,10 @@ Content-Type: application/json
   "quantity": 12,
   "expiresAt": "2025-11-30"
 }
+
+curl -X POST http://localhost:4000/api/ai/recipes/generate \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_HERE" \
+  -d '{
+    "mode": "random"
+  }'

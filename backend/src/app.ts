@@ -9,7 +9,7 @@ import userRoutes from "./routes/userRoutes";
 import groceryRoutes from "./routes/groceryRoutes";
 import fridgeRoutes from "./routes/fridgeRoutes";
 import recipeRoutes from "./routes/recipeRoutes";
-
+import aiRecipeRoutes from "./routes/aiRecipeRoutes";
 
 dotenv.config();
 
@@ -34,3 +34,4 @@ app.use("/api/users", userRoutes);
 app.use("/api/groceries", groceryRoutes);
 app.use("/api/fridge", fridgeRoutes);
 app.use("/api/recipes", recipeRoutes);
+app.use("/api/ai", aiRecipeRoutes);
