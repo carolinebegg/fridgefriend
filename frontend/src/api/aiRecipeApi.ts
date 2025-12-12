@@ -21,8 +21,8 @@ export interface AiRecipePreview {
   cookTimeMinutes?: number;
   ingredients: AiRecipeIngredientPreview[];
   steps: string[];
-  // tags: string[];
-  // sourceUrl?: string;
+  tags: string[];
+  sourceUrl?: string;
 }
 
 interface GenerateAiRecipePayload {

@@ -177,7 +177,12 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({
         style={styles.modalBackdrop}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.modalCard}>
+        <ScrollView
+          contentContainerStyle={styles.modalCardContent}
+          style={styles.modalCard}
+          showsVerticalScrollIndicator={true}
+          keyboardShouldPersistTaps="handled"
+        >
           <Text style={styles.modalTitle}>{title}</Text>
 
           {/* ITEM NAME */}
@@ -286,7 +291,7 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({
               <Text style={styles.fieldLabel}>Expiration</Text>
               <Pressable
                 style={styles.modalInputPressable}
-                onPress={() => setShowDatePicker(true)}
+                onPress={() => setShowDatePicker(!showDatePicker)}
               >
                 <Text
                   style={[
@@ -362,7 +367,7 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({
               )}
             </Pressable>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       {/* Unit suggestions modal */}
@@ -489,6 +494,10 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 10 },
     elevation: 8,
+    maxHeight: "90%",
+  },
+  modalCardContent: {
+    paddingBottom: 20,
   },
   modalTitle: {
     fontSize: 22,

@@ -85,6 +85,7 @@ export default function RecipesScreen() {
       cookTimeMinutes: values.cookTimeMinutes,
       ingredients: values.ingredients,
       steps: values.steps,
+      tags: values.tags,
     };
 
     try {
@@ -171,10 +172,8 @@ export default function RecipesScreen() {
         // nameKey will be computed on the backend if needed
       })),
       steps: preview.steps,
-      // If your backend create route accepts these, they’ll be used;
-      // otherwise they’ll just be ignored.
-      // tags: preview.tags,
-      // sourceUrl: preview.sourceUrl,
+      tags: preview.tags,
+      sourceUrl: preview.sourceUrl,
     };
   };
 

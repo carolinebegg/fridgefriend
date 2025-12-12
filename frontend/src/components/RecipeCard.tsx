@@ -1,8 +1,11 @@
+// src/components/RecipeCard.tsx
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Recipe, RecipeIngredient } from "../api/recipeApi";
 import { COLORS } from "../styles/groceryStyles";
+import { selectImportantTags } from "../utils/recipeTagUtils";
+import TagChipsCompact from "./TagChipsCompact";
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -20,6 +23,12 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   const { prepTimeMinutes, cookTimeMinutes } = recipe;
   const totalTimeMinutes = (prepTimeMinutes || 0) + (cookTimeMinutes || 0);
 
+  // 🔹 Pick at most 3 important tags for the card
+  const { visibleTags, remainingCount } = selectImportantTags(
+    recipe.tags || [],
+    3
+  );
+
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
@@ -34,14 +43,20 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 
         <View style={styles.headerActions}>
           <Pressable
-            style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
+            style={({ pressed }) => [
+              styles.iconButton,
+              pressed && styles.iconButtonPressed,
+            ]}
             onPress={() => onEdit(recipe)}
             hitSlop={8}
           >
             <Ionicons name="create-outline" size={20} color={COLORS.iconMuted} />
           </Pressable>
           <Pressable
-            style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
+            style={({ pressed }) => [
+              styles.iconButton,
+              pressed && styles.iconButtonPressed,
+            ]}
             onPress={() => onDelete(recipe)}
             hitSlop={8}
           >
@@ -50,37 +65,48 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
         </View>
       </View>
 
+      {/* Time chips - all in one row */}
       {(prepTimeMinutes || cookTimeMinutes) && (
-        <>
-          <View style={styles.metaRow}>
-            {prepTimeMinutes ? (
-              <View style={styles.pill}>
-                <Ionicons name="timer-outline" size={14} color={COLORS.text} />
-                <Text style={styles.pillText}>Prep {prepTimeMinutes}m</Text>
-              </View>
-            ) : null}
-            {cookTimeMinutes ? (
-              <View style={styles.pill}>
-                <Ionicons name="flame-outline" size={14} color={COLORS.text} />
-                <Text style={styles.pillText}>Cook {cookTimeMinutes}m</Text>
-              </View>
-            ) : null}
-          </View>
-          {totalTimeMinutes > 0 ? (
-            <View style={styles.totalTimeRow}>
-              <View style={[styles.pill, styles.totalTimePill]}>
-                <Ionicons name="time-outline" size={14} color={COLORS.text} />
-                <Text style={styles.pillText}>Total {totalTimeMinutes}m</Text>
-              </View>
+        <View style={styles.timeRow}>
+          {prepTimeMinutes ? (
+            <View style={styles.timePill}>
+              <Ionicons name="timer-outline" size={14} color={COLORS.text} />
+              <Text style={styles.timePillText}>Prep {prepTimeMinutes}m</Text>
             </View>
           ) : null}
-        </>
+          {cookTimeMinutes ? (
+            <View style={styles.timePill}>
+              <Ionicons name="flame-outline" size={14} color={COLORS.text} />
+              <Text style={styles.timePillText}>Cook {cookTimeMinutes}m</Text>
+            </View>
+          ) : null}
+          {totalTimeMinutes > 0 ? (
+            <View style={[styles.timePill, styles.totalTimePill]}>
+              <Ionicons name="time-outline" size={14} color={COLORS.text} />
+              <Text style={styles.timePillText}>Total {totalTimeMinutes}m</Text>
+            </View>
+          ) : null}
+        </View>
+      )}
+
+      {/* Tags row - smaller chips, up to 3 visible */}
+      {(visibleTags.length > 0 || remainingCount > 0) && (
+        <TagChipsCompact
+          tags={visibleTags}
+          remainingCount={remainingCount}
+          style={styles.tagsRow}
+          onPressTag={() => onEdit(recipe)}
+          onPressMore={() => onEdit(recipe)}
+        />
       )}
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Ingredients</Text>
         <Pressable
-          style={({ pressed }) => [styles.addToGroceryButton, pressed && styles.addToGroceryPressed]}
+          style={({ pressed }) => [
+            styles.addToGroceryButton,
+            pressed && styles.addToGroceryPressed,
+          ]}
           onPress={() => onAddToGrocery(recipe)}
         >
           <Ionicons name="cart" size={14} color={COLORS.text} />
@@ -119,7 +145,8 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
           ))}
           {recipe.steps.length > 4 ? (
             <Text style={styles.moreText}>
-              +{recipe.steps.length - 4} more step{recipe.steps.length - 4 === 1 ? "" : "s"}
+              +{recipe.steps.length - 4} more step
+              {recipe.steps.length - 4 === 1 ? "" : "s"}
             </Text>
           ) : null}
         </View>
@@ -130,6 +157,8 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 
 export default RecipeCard;
 
+// ---------- helpers ----------
+
 function renderStatusIcon(ingredient: RecipeIngredient) {
   const status = ingredient.availability?.status;
 
@@ -137,7 +166,9 @@ function renderStatusIcon(ingredient: RecipeIngredient) {
     return <Ionicons name="checkmark-circle" size={20} color="#34C759" />;
   }
   if (status === "grocery") {
-    return <Ionicons name="cart-outline" size={20} color={COLORS.yellowDark} />;
+    return (
+      <Ionicons name="cart-outline" size={20} color={COLORS.yellowDark} />
+    );
   }
   return <Ionicons name="close-circle" size={20} color={COLORS.delete} />;
 }
@@ -149,6 +180,8 @@ function formatIngredientMeta(ing: RecipeIngredient) {
   if (ing.note) parts.push(`· ${ing.note}`);
   return parts.length ? parts.join(" ") : "Optional";
 }
+
+// ---------- styles ----------
 
 const styles = StyleSheet.create({
   card: {
@@ -184,23 +217,23 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: COLORS.muted,
   },
-  metaRow: {
+
+  // Time chips row
+  timeRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     marginTop: 10,
-    marginBottom: 4,
-  },
-  totalTimeRow: {
-    flexDirection: "row",
     marginBottom: 6,
   },
-  pill: {
+  timePill: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: COLORS.pillBg,
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginRight: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    marginRight: 6,
+    marginBottom: 4,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
@@ -208,10 +241,15 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.yellow,
     borderColor: COLORS.yellowDark,
   },
-  pillText: {
-    marginLeft: 4,
+  timePillText: {
+    marginLeft: 3,
     color: COLORS.text,
     fontWeight: "600",
+    fontSize: 12,
+  },
+  // Tags row - smaller styling
+  tagsRow: {
+    marginBottom: 6,
   },
   section: {
     marginTop: 12,

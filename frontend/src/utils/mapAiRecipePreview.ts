@@ -35,7 +35,7 @@ export function mapAiPreviewToEditorInitialValues(
     description: ai.description ?? "",
     ingredients: ingredientRows,
     steps: ai.steps ?? [],
-    // tags: ai.tags ?? [],
+    tags: ai.tags ?? [],
     photoUrl: ai.photoUrl ?? "",
     prepTimeMinutes:
       typeof ai.prepTimeMinutes === "number" ? ai.prepTimeMinutes : undefined,

@@ -16,6 +16,7 @@ import { Recipe, RecipeIngredient } from "../api/recipeApi";
 import ItemEditorModal, {
   ItemEditorValues,
 } from "../components/ItemEditorModal";
+import { ALL_RECIPE_TAGS } from "../utils/recipeTagUtils";
 
 export interface RecipeEditorValues {
   title: string;
@@ -25,6 +26,7 @@ export interface RecipeEditorValues {
   cookTimeMinutes?: number;
   ingredients: RecipeIngredient[];
   steps: string[];
+  tags: string[];
 }
 
 export interface IngredientRow {
@@ -62,6 +64,8 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
   const [prepTime, setPrepTime] = useState("");
   const [cookTime, setCookTime] = useState("");
   const [stepsText, setStepsText] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   const [ingredientRows, setIngredientRows] =
     useState<IngredientRow[]>(EMPTY_ROWS);
 
@@ -81,6 +85,8 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
     setPrepTime(initialRecipe?.prepTimeMinutes?.toString() ?? "");
     setCookTime(initialRecipe?.cookTimeMinutes?.toString() ?? "");
     setStepsText((initialRecipe?.steps || []).join("\n"));
+    setTags(initialRecipe?.tags || []);
+    setTagInput("");
 
     const rows: IngredientRow[] = (initialRecipe?.ingredients || []).map(
       (ing, idx) => ({
@@ -192,6 +198,7 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
         .split(/\n+/)
         .map((s) => s.trim())
         .filter(Boolean),
+      tags: tags,
     });
   };
 
@@ -271,6 +278,72 @@ const RecipeEditorModal: React.FC<RecipeEditorModalProps> = ({
               onChangeText={setDescription}
               multiline
             />
+
+            <Text style={styles.label}>Tags</Text>
+            <View style={styles.tagsSection}>
+              <View style={styles.tagsInputRow}>
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  placeholder="Add a tag..."
+                  value={tagInput}
+                  onChangeText={setTagInput}
+                  onSubmitEditing={() => {
+                    const trimmed = tagInput.trim();
+                    if (trimmed && !tags.includes(trimmed)) {
+                      setTags([...tags, trimmed]);
+                      setTagInput("");
+                    }
+                  }}
+                />
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.addTagButton,
+                    pressed && styles.addTagButtonPressed,
+                  ]}
+                  onPress={() => {
+                    const trimmed = tagInput.trim();
+                    if (trimmed && !tags.includes(trimmed)) {
+                      setTags([...tags, trimmed]);
+                      setTagInput("");
+                    }
+                  }}
+                >
+                  <Ionicons name="add" size={20} color={COLORS.text} />
+                </Pressable>
+              </View>
+              
+              {tags.length > 0 && (
+                <View style={styles.currentTags}>
+                  {tags.map((tag) => (
+                    <View key={tag} style={styles.tagChip}>
+                      <Text style={styles.tagChipText}>{tag}</Text>
+                      <Pressable
+                        onPress={() => setTags(tags.filter((t) => t !== tag))}
+                        hitSlop={8}
+                      >
+                        <Ionicons name="close-circle" size={16} color={COLORS.muted} />
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              )}
+              
+              <Text style={styles.suggestedLabel}>Suggested:</Text>
+              <View style={styles.suggestedTags}>
+                {ALL_RECIPE_TAGS.filter((t) => !tags.includes(t)).slice(0, 12).map((tag) => (
+                  <Pressable
+                    key={tag}
+                    style={({ pressed }) => [
+                      styles.suggestedTagChip,
+                      pressed && styles.suggestedTagChipPressed,
+                    ]}
+                    onPress={() => setTags([...tags, tag])}
+                  >
+                    <Text style={styles.suggestedTagText}>{tag}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
 
             <Text style={styles.label}>Photo URL</Text>
             <TextInput
@@ -534,5 +607,74 @@ const styles = StyleSheet.create({
   ingredientActions: {
     flexDirection: "row",
     marginLeft: 10,
+  },
+  tagsSection: {
+    marginBottom: 8,
+  },
+  tagsInputRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  addTagButton: {
+    backgroundColor: COLORS.yellow,
+    borderRadius: 999,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: COLORS.yellowDark,
+  },
+  addTagButtonPressed: {
+    opacity: 0.7,
+  },
+  currentTags: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 10,
+    gap: 8,
+  },
+  tagChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.yellow,
+    borderWidth: 1,
+    borderColor: COLORS.yellowDark,
+    borderRadius: 999,
+    paddingLeft: 12,
+    paddingRight: 8,
+    paddingVertical: 6,
+    gap: 6,
+  },
+  tagChipText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.text,
+  },
+  suggestedLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.muted,
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  suggestedTags: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  suggestedTagChip: {
+    backgroundColor: COLORS.pillBg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  suggestedTagChipPressed: {
+    backgroundColor: COLORS.yellow,
+  },
+  suggestedTagText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: COLORS.text,
   },
 });
