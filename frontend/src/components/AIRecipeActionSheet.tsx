@@ -7,10 +7,22 @@ import {
   Pressable,
   TextInput,
   ActivityIndicator,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-export type AiRecipeMode = "fridge" | "random" | "prompt";
+export type AiRecipeMode = "fridge" | "prompt";
+
+const COLORS = {
+  background: "#FFFDF7",
+  card: "#FFFFFF",
+  border: "#E5D9C5",
+  text: "#3D2F25",
+  muted: "#8A7B6C",
+  yellow: "#F6D26B",
+  yellowDark: "#D6AE3A",
+  pillBg: "#FFF3C7",
+};
 
 interface Props {
   visible: boolean;
@@ -30,19 +42,23 @@ export default function AIRecipeActionSheet({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="fade"
       transparent
       onRequestClose={onClose}
     >
-      <View style={styles.backdrop}>
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.backdrop} />
+      </TouchableWithoutFeedback>
+      
+      <View style={styles.sheetContainer}>
         <View style={styles.sheet}>
           <View style={styles.headerRow}>
             <View style={styles.titleRow}>
-              <Ionicons name="sparkles-outline" size={20} />
+              <Ionicons name="sparkles-outline" size={22} color={COLORS.yellow} />
               <Text style={styles.title}>AI Recipe Ideas</Text>
             </View>
             <Pressable onPress={onClose} hitSlop={8}>
-              <Ionicons name="close" size={22} />
+              <Ionicons name="close" size={24} color={COLORS.text} />
             </Pressable>
           </View>
 
@@ -51,15 +67,18 @@ export default function AIRecipeActionSheet({
           </Text>
 
           <Pressable
-            style={styles.primaryButton}
+            style={({ pressed }) => [
+              styles.primaryButton,
+              pressed && styles.primaryButtonPressed,
+            ]}
             disabled={loading}
             onPress={() => onGenerate("fridge")}
           >
             {loading ? (
-              <ActivityIndicator />
+              <ActivityIndicator color={COLORS.text} />
             ) : (
               <>
-                <Ionicons name="restaurant-outline" size={18} color="white" />
+                <Ionicons name="restaurant-outline" size={20} color={COLORS.text} />
                 <Text style={styles.primaryButtonText}>
                   Use what&apos;s in my fridge
                 </Text>
@@ -67,40 +86,39 @@ export default function AIRecipeActionSheet({
             )}
           </Pressable>
 
-          <Pressable
-            style={styles.secondaryButton}
-            disabled={loading}
-            onPress={() => onGenerate("random")}
-          >
-            <Ionicons name="shuffle-outline" size={18} />
-            <Text style={styles.secondaryButtonText}>Random recipe</Text>
-          </Pressable>
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
 
           <View style={styles.promptBox}>
             <Text style={styles.promptLabel}>
-              Or describe the recipe you want:
+              Describe the recipe you want:
             </Text>
             <TextInput
               style={styles.promptInput}
-              placeholder="e.g. 20-minute vegetarian pasta with mushrooms"
+              placeholder="e.g., 20-minute vegetarian pasta with mushrooms"
+              placeholderTextColor={COLORS.muted}
               value={customPrompt}
               onChangeText={setCustomPrompt}
               multiline
             />
             <Pressable
-              style={[
-                styles.primaryButton,
-                { marginTop: 8, opacity: customPrompt.trim() ? 1 : 0.4 },
+              style={({ pressed }) => [
+                styles.generateButton,
+                !customPrompt.trim() && styles.generateButtonDisabled,
+                pressed && customPrompt.trim() && styles.generateButtonPressed,
               ]}
               disabled={!customPrompt.trim() || loading}
               onPress={() => onGenerate("prompt", customPrompt.trim())}
             >
               {loading ? (
-                <ActivityIndicator color="white" />
+                <ActivityIndicator color={COLORS.text} />
               ) : (
                 <>
-                  <Ionicons name="sparkles-outline" size={18} color="white" />
-                  <Text style={styles.primaryButtonText}>Generate</Text>
+                  <Ionicons name="sparkles" size={18} color={COLORS.text} />
+                  <Text style={styles.generateButtonText}>Generate</Text>
                 </>
               )}
             </Pressable>
@@ -114,80 +132,125 @@ export default function AIRecipeActionSheet({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "flex-end",
+  },
+  sheetContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     justifyContent: "flex-end",
   },
   sheet: {
-    backgroundColor: "white",
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 24,
+    backgroundColor: COLORS.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    gap: 12,
+    padding: 20,
+    paddingBottom: 34,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 8,
   },
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
   title: {
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 20,
+    fontWeight: "700",
+    color: COLORS.text,
   },
   subtitle: {
-    fontSize: 13,
-    color: "#555",
+    fontSize: 14,
+    color: COLORS.muted,
+    marginBottom: 20,
+    lineHeight: 20,
   },
   primaryButton: {
+    backgroundColor: COLORS.yellow,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    backgroundColor: "#3b82f6",
-    paddingVertical: 10,
-    borderRadius: 999,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: COLORS.yellowDark,
+  },
+  primaryButtonPressed: {
+    backgroundColor: COLORS.yellowDark,
   },
   primaryButtonText: {
-    color: "white",
+    fontSize: 16,
     fontWeight: "600",
-    fontSize: 14,
+    color: COLORS.text,
   },
-  secondaryButton: {
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+  dividerText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.muted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  promptBox: {
+    gap: 10,
+  },
+  promptLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.text,
+  },
+  promptInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    padding: 12,
+    minHeight: 80,
+    fontSize: 15,
+    color: COLORS.text,
+    backgroundColor: COLORS.background,
+    textAlignVertical: "top",
+  },
+  generateButton: {
+    backgroundColor: COLORS.yellow,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
-    paddingVertical: 9,
-    borderRadius: 999,
+    gap: 8,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: COLORS.yellowDark,
   },
-  secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: "500",
+  generateButtonDisabled: {
+    opacity: 0.4,
   },
-  promptBox: {
-    marginTop: 4,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 12,
-    padding: 10,
-    gap: 6,
+  generateButtonPressed: {
+    backgroundColor: COLORS.yellowDark,
   },
-  promptLabel: {
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  promptInput: {
-    minHeight: 60,
-    maxHeight: 120,
-    fontSize: 13,
-    paddingVertical: 4,
+  generateButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: COLORS.text,
   },
 });
