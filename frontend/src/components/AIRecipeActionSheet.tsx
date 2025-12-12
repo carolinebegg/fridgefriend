@@ -8,6 +8,10 @@ import {
   TextInput,
   ActivityIndicator,
   TouchableWithoutFeedback,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -49,9 +53,18 @@ export default function AIRecipeActionSheet({
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.backdrop} />
       </TouchableWithoutFeedback>
-      
-      <View style={styles.sheetContainer}>
-        <View style={styles.sheet}>
+
+      <View style={styles.centerWrap}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.keyboardWrap}
+        >
+          <View style={styles.sheet}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <ScrollView
+                contentContainerStyle={styles.sheetContent}
+                keyboardShouldPersistTaps="handled"
+              >
           <View style={styles.headerRow}>
             <View style={styles.titleRow}>
               <Ionicons name="sparkles-outline" size={22} color={COLORS.yellow} />
@@ -123,7 +136,10 @@ export default function AIRecipeActionSheet({
               )}
             </Pressable>
           </View>
-        </View>
+              </ScrollView>
+            </TouchableWithoutFeedback>
+          </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -133,23 +149,34 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.4)",
-    justifyContent: "flex-end",
   },
-  sheetContainer: {
+  centerWrap: {
     position: "absolute",
-    bottom: 0,
+    top: 0,
     left: 0,
     right: 0,
-    justifyContent: "flex-end",
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
+  },
+  keyboardWrap: {
+    width: "100%",
+    alignItems: "center",
   },
   sheet: {
-    backgroundColor: COLORS.card,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    paddingBottom: 34,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+  backgroundColor: COLORS.card,
+  borderRadius: 20,
+  paddingHorizontal: 22,
+  paddingVertical: 22,
+  borderWidth: 1,
+  borderColor: COLORS.border,
+  width: "100%",
+  maxWidth: 540,
+  maxHeight: "85%",
+},
+  sheetContent: {
+    paddingBottom: 12,
   },
   headerRow: {
     flexDirection: "row",
