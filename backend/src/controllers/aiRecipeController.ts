@@ -13,6 +13,10 @@ export async function generateAiRecipeController(
   req: AuthRequest,
   res: Response
 ) {
+
+  const startedAt = Date.now();
+  console.log("[AI] /recipes/generate start", { mode: req.body?.mode });
+
   try {
     const { mode, prompt } = req.body as {
       mode: AiRecipeMode;
@@ -65,9 +69,20 @@ export async function generateAiRecipeController(
       sourceUrl: aiDraft.sourceUrl ?? undefined,
     };
 
+    console.log(
+      "[AI] /recipes/generate success in",
+      Date.now() - startedAt,
+      "ms"
+    );
     return res.status(200).json(preview);
+
   } catch (err) {
-    console.error("AI recipe generation failed", err);
+    console.error(
+      "[AI] /recipes/generate error after",
+      Date.now() - startedAt,
+      "ms",
+      err
+    );
     return res
       .status(500)
       .json({ error: "Failed to generate recipe with AI" });

@@ -116,9 +116,13 @@ export const recipeService = {
     const ingredients = recipe.ingredients || [];
     if (ingredients.length === 0) return [];
 
-    const existingGroceries = await groceryDao.findByUser(userId);
+    // Fetch current fridge + grocery to determine what is missing
+    const [existingGroceries, fridgeItems] = await Promise.all([
+      groceryDao.findByUser(userId),
+      fridgeDao.findByUser(userId),
+    ]);
 
-    // Map existing groceries by pantryItem id
+    // Map existing groceries by pantryItem id for quick lookups
     const existingByPantryId: Record<string, IGroceryItem> = {};
     for (const item of existingGroceries) {
       if (item.pantryItem) {
@@ -128,12 +132,24 @@ export const recipeService = {
 
     const createdOrUpdated: IGroceryItem[] = [];
 
-    for (const ingredient of ingredients) {
+    for (const ing of ingredients) {
+      const ingredient =
+        typeof (ing as any).toObject === "function" ? (ing as any).toObject() : ing;
+
       const name = (ingredient.name || "").trim();
       if (!name) continue;
 
+      // Skip anything already in fridge or grocery (only add missing ingredients)
+      const availability = computeAvailability(
+        ingredient as IRecipeIngredient,
+        fridgeItems,
+        existingGroceries
+      );
+      if (availability.status !== "missing") {
+        continue;
+      }
+
       // Prefer existing pantryItem; otherwise, create one
-      let pantryIdStr: string;
       let pantryItemId = ingredient.pantryItem;
 
       if (!pantryItemId) {
@@ -143,33 +159,27 @@ export const recipeService = {
           defaultUnit: ingredient.unit as string | undefined,
         });
         pantryItemId = pantryItem._id;
-        // NOTE: we are not mutating/storing back to recipe here (to keep it simple),
-        // but you could if you wanted to persist pantryItem onto the recipe.
+        // NOTE: we are not mutating/storing back to recipe here (to keep it simple).
       }
 
-      pantryIdStr = String(pantryItemId);
+      const pantryIdStr = String(pantryItemId);
 
       const defaultQuantity = ingredient.quantity ?? 1;
-      const defaultUnit =
-        (ingredient.unit as string | undefined) ?? "piece";
+      const defaultUnit = (ingredient.unit as string | undefined) ?? "piece";
       const label = ingredient.label ?? null;
       const brand = ingredient.brand ?? null;
-      const nameKey = makeNameKey(name);
+      const nameKey = ingredient.nameKey ?? makeNameKey(name);
 
       const existing = existingByPantryId[pantryIdStr];
 
       if (existing) {
-        const updated = await groceryDao.updateByIdAndUser(
-          String(existing._id),
-          userId,
-          {
-            quantity: ingredient.quantity ?? existing.quantity,
-            unit: (ingredient.unit as string | undefined) ?? existing.unit,
-            label: label === null ? null : label ?? existing.label,
-            brand: brand === null ? null : brand ?? existing.brand,
-            isChecked: false,
-          }
-        );
+        const updated = await groceryDao.updateByIdAndUser(String(existing._id), userId, {
+          quantity: ingredient.quantity ?? existing.quantity,
+          unit: (ingredient.unit as string | undefined) ?? existing.unit,
+          label: label === null ? null : label ?? existing.label,
+          brand: brand === null ? null : brand ?? existing.brand,
+          isChecked: false,
+        });
 
         if (updated) {
           createdOrUpdated.push(updated);
