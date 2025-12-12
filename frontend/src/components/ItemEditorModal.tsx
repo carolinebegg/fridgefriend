@@ -29,7 +29,7 @@ export interface ItemEditorValues {
   quantity?: number;
   unit?: string;
   brand?: string;
-  label?: string | null;          // category
+  label?: string | null; // category
   expirationDate?: Date | null;
   note?: string;
 }
@@ -59,8 +59,8 @@ interface ItemEditorModalProps {
   showNote?: boolean;
 
   // behaviour
-  requireQuantity?: boolean;          // grocery + fridge: true, recipe: false
-  labelOptions?: string[];           // defaults to BASE_LABEL_OPTIONS
+  requireQuantity?: boolean; // grocery + fridge: true, recipe: false
+  labelOptions?: string[]; // defaults to BASE_LABEL_OPTIONS
 }
 
 // palette like your existing ItemEditorModal
@@ -177,170 +177,170 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({
         style={styles.modalBackdrop}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <ScrollView
-          contentContainerStyle={styles.modalCardContent}
-          style={styles.modalCard}
-          showsVerticalScrollIndicator={true}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text style={styles.modalTitle}>{title}</Text>
+        <View style={styles.modalCard}>
+          {/* Scrollable form content */}
+          <ScrollView
+            style={styles.modalScroll}
+            contentContainerStyle={styles.modalCardContent}
+            showsVerticalScrollIndicator={true}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={styles.modalTitle}>{title}</Text>
 
-          {/* ITEM NAME */}
-          <View style={styles.section}>
-            <Text style={styles.fieldLabel}>
-              {context === "recipe" ? "Ingredient" : "Item"}
-            </Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder={context === "recipe" ? "Flour" : "Bread"}
-              value={name}
-              onChangeText={setName}
-            />
-          </View>
-
-          {/* QUANTITY + UNIT */}
-          <View style={styles.section}>
-            <Text style={styles.fieldLabel}>Quantity & unit</Text>
-            <View style={styles.modalRow}>
-              <View style={styles.modalHalfContainer}>
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="1"
-                  keyboardType="numeric"
-                  value={quantity}
-                  onChangeText={(val) => {
-                    setQuantity(val);
-                    if (quantityError) setQuantityError(null);
-                  }}
-                />
-                {quantityError && (
-                  <Text style={styles.errorText}>{quantityError}</Text>
-                )}
-              </View>
-
-              <View style={[styles.modalHalf, styles.unitInputRow]}>
-                <TextInput
-                  style={[styles.modalInput, styles.unitTextInput]}
-                  placeholder={
-                    context === "recipe"
-                      ? "cup"
-                      : context === "fridge"
-                      ? "container"
-                      : "loaf"
-                  }
-                  value={unit}
-                  onChangeText={setUnit}
-                />
-                <Pressable
-                  style={styles.unitSuggestionButton}
-                  onPress={() => setShowUnitMenu(true)}
-                >
-                  <Text style={styles.unitSuggestionButtonText}>⋯</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-
-          {/* BRAND */}
-          <View style={styles.section}>
-            <Text style={styles.fieldLabel}>Brand</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="e.g., Trader Joe's"
-              value={brand}
-              onChangeText={setBrand}
-            />
-          </View>
-
-          {/* CATEGORY / LABEL */}
-          {showCategory && (
+            {/* ITEM NAME */}
             <View style={styles.section}>
-              <Text style={styles.modalLabelHeading}>Category</Text>
-              <View style={styles.labelChipsRow}>
-                {labelOptions.map((option) => {
-                  const isSelected = label === option;
-                  return (
-                    <Pressable
-                      key={option}
-                      onPress={() =>
-                        setLabel((prev) => (prev === option ? null : option))
-                      }
-                      style={[
-                        styles.labelChip,
-                        isSelected && styles.labelChipSelected,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.labelChipText,
-                          isSelected && styles.labelChipTextSelected,
-                        ]}
-                      >
-                        {option}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-
-          {/* EXPIRATION */}
-          {showExpiration && (
-            <View style={styles.section}>
-              <Text style={styles.fieldLabel}>Expiration</Text>
-              <Pressable
-                style={styles.modalInputPressable}
-                onPress={() => setShowDatePicker(!showDatePicker)}
-              >
-                <Text
-                  style={[
-                    styles.modalInputText,
-                    !expirationDate && styles.modalInputPlaceholder,
-                  ]}
-                >
-                  {expirationDate
-                    ? `Expires ${formatDate(
-                        expirationDate.toISOString()
-                      )}`
-                    : "Expiration date"}
-                </Text>
-                <Ionicons
-                  name="calendar-outline"
-                  size={18}
-                  color={COLORS.muted}
-                />
-              </Pressable>
-
-              {showDatePicker && (
-  <View style={{ marginTop: 8 }}>
-    <DateTimePicker
-      value={expirationDate || new Date()}
-      mode="date"
-      display={Platform.OS === "ios" ? "spinner" : "calendar"}
-      onChange={handleDateChange}
-      minimumDate={new Date()}
-    />
-  </View>
-)}
-
-            </View>
-          )}
-
-          {/* NOTES (recipe) */}
-          {showNote && (
-            <View style={styles.section}>
-              <Text style={styles.fieldLabel}>Notes</Text>
+              <Text style={styles.fieldLabel}>
+                {context === "recipe" ? "Ingredient" : "Item"}
+              </Text>
               <TextInput
                 style={styles.modalInput}
-                placeholder="e.g., sifted, room temp"
-                value={note}
-                onChangeText={setNote}
+                placeholder={context === "recipe" ? "Flour" : "Bread"}
+                value={name}
+                onChangeText={setName}
               />
             </View>
-          )}
 
-          {/* BUTTONS */}
+            {/* QUANTITY + UNIT */}
+            <View style={styles.section}>
+              <Text style={styles.fieldLabel}>Quantity & unit</Text>
+              <View style={styles.modalRow}>
+                <View style={styles.modalHalfContainer}>
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="1"
+                    keyboardType="numeric"
+                    value={quantity}
+                    onChangeText={(val) => {
+                      setQuantity(val);
+                      if (quantityError) setQuantityError(null);
+                    }}
+                  />
+                  {quantityError && (
+                    <Text style={styles.errorText}>{quantityError}</Text>
+                  )}
+                </View>
+
+                <View style={[styles.modalHalf, styles.unitInputRow]}>
+                  <TextInput
+                    style={[styles.modalInput, styles.unitTextInput]}
+                    placeholder={
+                      context === "recipe"
+                        ? "cup"
+                        : context === "fridge"
+                        ? "container"
+                        : "loaf"
+                    }
+                    value={unit}
+                    onChangeText={setUnit}
+                  />
+                  <Pressable
+                    style={styles.unitSuggestionButton}
+                    onPress={() => setShowUnitMenu(true)}
+                  >
+                    <Text style={styles.unitSuggestionButtonText}>⋯</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+
+            {/* BRAND */}
+            <View style={styles.section}>
+              <Text style={styles.fieldLabel}>Brand</Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="e.g., Trader Joe's"
+                value={brand}
+                onChangeText={setBrand}
+              />
+            </View>
+
+            {/* CATEGORY / LABEL */}
+            {showCategory && (
+              <View style={styles.section}>
+                <Text style={styles.modalLabelHeading}>Category</Text>
+                <View style={styles.labelChipsRow}>
+                  {labelOptions.map((option) => {
+                    const isSelected = label === option;
+                    return (
+                      <Pressable
+                        key={option}
+                        onPress={() =>
+                          setLabel((prev) => (prev === option ? null : option))
+                        }
+                        style={[
+                          styles.labelChip,
+                          isSelected && styles.labelChipSelected,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.labelChipText,
+                            isSelected && styles.labelChipTextSelected,
+                          ]}
+                        >
+                          {option}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {/* EXPIRATION */}
+            {showExpiration && (
+              <View style={styles.section}>
+                <Text style={styles.fieldLabel}>Expiration</Text>
+                <Pressable
+                  style={styles.modalInputPressable}
+                  onPress={() => setShowDatePicker((prev) => !prev)}
+                >
+                  <Text
+                    style={[
+                      styles.modalInputText,
+                      !expirationDate && styles.modalInputPlaceholder,
+                    ]}
+                  >
+                    {expirationDate
+                      ? `Expires ${formatDate(expirationDate.toISOString())}`
+                      : "Expiration date"}
+                  </Text>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={18}
+                    color={COLORS.muted}
+                  />
+                </Pressable>
+
+                {showDatePicker && (
+                  <View style={styles.datePickerContainer}>
+                    <DateTimePicker
+                      value={expirationDate || new Date()}
+                      mode="date"
+                      display={Platform.OS === "ios" ? "spinner" : "calendar"}
+                      onChange={handleDateChange}
+                      {...(Platform.OS === "ios" && { textColor: COLORS.text })}
+                    />
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* NOTES (recipe) */}
+            {showNote && (
+              <View style={styles.section}>
+                <Text style={styles.fieldLabel}>Notes</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="e.g., sifted, room temp"
+                  value={note}
+                  onChangeText={setNote}
+                />
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Fixed button row at bottom of card */}
           <View style={styles.modalButtonRow}>
             <Pressable
               style={[styles.modalButton, styles.modalButtonOutline]}
@@ -367,7 +367,7 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({
               )}
             </Pressable>
           </View>
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
 
       {/* Unit suggestions modal */}
@@ -383,77 +383,114 @@ const ItemEditorModal: React.FC<ItemEditorModalProps> = ({
 
         <View style={styles.unitMenu}>
           <ScrollView showsVerticalScrollIndicator={false}>
-          <Text style={styles.unitMenuTitle}>Liquid</Text>
-          <View style={styles.unitChipsRow}>
-            {UNITS.Liquid.map((u) => (
-              <Pressable key={u} style={styles.unitChip} onPress={() => selectUnit(u)}>
-                <Text style={styles.unitChipText}>{u}</Text>
-              </Pressable>
-            ))}
-          </View>
+            <Text style={styles.unitMenuTitle}>Liquid</Text>
+            <View style={styles.unitChipsRow}>
+              {UNITS.Liquid.map((u) => (
+                <Pressable
+                  key={u}
+                  style={styles.unitChip}
+                  onPress={() => selectUnit(u)}
+                >
+                  <Text style={styles.unitChipText}>{u}</Text>
+                </Pressable>
+              ))}
+            </View>
 
-          <Text style={styles.unitMenuTitle}>Weight</Text>
-          <View style={styles.unitChipsRow}>
-            {UNITS.Weight.map((u) => (
-              <Pressable key={u} style={styles.unitChip} onPress={() => selectUnit(u)}>
-                <Text style={styles.unitChipText}>{u}</Text>
-              </Pressable>
-            ))}
-          </View>
+            <Text style={styles.unitMenuTitle}>Weight</Text>
+            <View style={styles.unitChipsRow}>
+              {UNITS.Weight.map((u) => (
+                <Pressable
+                  key={u}
+                  style={styles.unitChip}
+                  onPress={() => selectUnit(u)}
+                >
+                  <Text style={styles.unitChipText}>{u}</Text>
+                </Pressable>
+              ))}
+            </View>
 
-          <Text style={styles.unitMenuTitle}>Quantity</Text>
-          <Text style={styles.unitMenuSubtitle}>Whole</Text>
-          <View style={styles.unitChipsRow}>
-            {UNITS.Quantity.Whole.map((u) => (
-              <Pressable key={u} style={styles.unitChip} onPress={() => selectUnit(u)}>
-                <Text style={styles.unitChipText}>{u}</Text>
-              </Pressable>
-            ))}
-          </View>
-          <Text style={styles.unitMenuSubtitle}>Packs</Text>
-          <View style={styles.unitChipsRow}>
-            {UNITS.Quantity.Packs.map((u) => (
-              <Pressable key={u} style={styles.unitChip} onPress={() => selectUnit(u)}>
-                <Text style={styles.unitChipText}>{u}</Text>
-              </Pressable>
-            ))}
-          </View>
-          <Text style={styles.unitMenuSubtitle}>Containers</Text>
-          <View style={styles.unitChipsRow}>
-            {UNITS.Quantity.Containers.map((u) => (
-              <Pressable key={u} style={styles.unitChip} onPress={() => selectUnit(u)}>
-                <Text style={styles.unitChipText}>{u}</Text>
-              </Pressable>
-            ))}
-          </View>
-          <Text style={styles.unitMenuSubtitle}>Baking</Text>
-          <View style={styles.unitChipsRow}>
-            {UNITS.Quantity.Baking.map((u) => (
-              <Pressable key={u} style={styles.unitChip} onPress={() => selectUnit(u)}>
-                <Text style={styles.unitChipText}>{u}</Text>
-              </Pressable>
-            ))}
-          </View>
-          <Text style={styles.unitMenuSubtitle}>Produce</Text>
-          <View style={styles.unitChipsRow}>
-            {UNITS.Quantity.Produce.map((u) => (
-              <Pressable key={u} style={styles.unitChip} onPress={() => selectUnit(u)}>
-                <Text style={styles.unitChipText}>{u}</Text>
-              </Pressable>
-            ))}
-          </View>
-          {context === "recipe" && (
-            <>
-              <Text style={styles.unitMenuSubtitle}>Serving</Text>
-              <View style={styles.unitChipsRow}>
-                {UNITS.Quantity.Serving.map((u) => (
-                  <Pressable key={u} style={styles.unitChip} onPress={() => selectUnit(u)}>
-                    <Text style={styles.unitChipText}>{u}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            </>
-          )}
+            <Text style={styles.unitMenuTitle}>Quantity</Text>
+            <Text style={styles.unitMenuSubtitle}>Whole</Text>
+            <View style={styles.unitChipsRow}>
+              {UNITS.Quantity.Whole.map((u) => (
+                <Pressable
+                  key={u}
+                  style={styles.unitChip}
+                  onPress={() => selectUnit(u)}
+                >
+                  <Text style={styles.unitChipText}>{u}</Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Text style={styles.unitMenuSubtitle}>Packs</Text>
+            <View style={styles.unitChipsRow}>
+              {UNITS.Quantity.Packs.map((u) => (
+                <Pressable
+                  key={u}
+                  style={styles.unitChip}
+                  onPress={() => selectUnit(u)}
+                >
+                  <Text style={styles.unitChipText}>{u}</Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Text style={styles.unitMenuSubtitle}>Containers</Text>
+            <View style={styles.unitChipsRow}>
+              {UNITS.Quantity.Containers.map((u) => (
+                <Pressable
+                  key={u}
+                  style={styles.unitChip}
+                  onPress={() => selectUnit(u)}
+                >
+                  <Text style={styles.unitChipText}>{u}</Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Text style={styles.unitMenuSubtitle}>Baking</Text>
+            <View style={styles.unitChipsRow}>
+              {UNITS.Quantity.Baking.map((u) => (
+                <Pressable
+                  key={u}
+                  style={styles.unitChip}
+                  onPress={() => selectUnit(u)}
+                >
+                  <Text style={styles.unitChipText}>{u}</Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <Text style={styles.unitMenuSubtitle}>Produce</Text>
+            <View style={styles.unitChipsRow}>
+              {UNITS.Quantity.Produce.map((u) => (
+                <Pressable
+                  key={u}
+                  style={styles.unitChip}
+                  onPress={() => selectUnit(u)}
+                >
+                  <Text style={styles.unitChipText}>{u}</Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {context === "recipe" && (
+              <>
+                <Text style={styles.unitMenuSubtitle}>Serving</Text>
+                <View style={styles.unitChipsRow}>
+                  {UNITS.Quantity.Serving.map((u) => (
+                    <Pressable
+                      key={u}
+                      style={styles.unitChip}
+                      onPress={() => selectUnit(u)}
+                    >
+                      <Text style={styles.unitChipText}>{u}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </>
+            )}
           </ScrollView>
         </View>
       </Modal>
@@ -479,14 +516,18 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.35)",
-    justifyContent: "center",
+    justifyContent: "flex-start",
+    alignItems: "center",
     paddingHorizontal: 24,
+    paddingTop: 70, // starts a bit lower on screen
+    paddingBottom: 40,
   },
   modalCard: {
     backgroundColor: COLORS.card,
     borderRadius: 28,
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
     shadowColor: "#000",
@@ -494,10 +535,25 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 10 },
     elevation: 8,
-    maxHeight: "90%",
+    width: "100%",
+    maxWidth: 540,
+    maxHeight: "92%", // increased to accommodate date picker
+  },
+  modalScroll: {
+    flexShrink: 1,
   },
   modalCardContent: {
-    paddingBottom: 20,
+    paddingBottom: 12, // small gap above buttons
+  },
+  datePickerContainer: {
+    marginTop: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: COLORS.background,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 22,
@@ -557,7 +613,7 @@ const styles = StyleSheet.create({
   modalButtonRow: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 4,
+    marginTop: 8,
   },
   modalButton: {
     paddingHorizontal: 18,
@@ -694,3 +750,4 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
 });
+

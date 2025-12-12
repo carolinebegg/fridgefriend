@@ -1,7 +1,7 @@
 // src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiClient } from "../api/client"; // adjust if your client is named differently
+import { apiClient } from "../api/client"; 
 
 type User = {
   id: string;
