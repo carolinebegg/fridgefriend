@@ -3,6 +3,9 @@ import { openai } from "../integrations/openAiClient";
 import { IRecipeIngredient } from "../models/Recipe";
 import { IFridgeItem } from "../models/FridgeItem";
 
+import { BASE_LABEL_OPTIONS } from "../constants/labels";
+import { FLAT_UNITS } from "../constants/units";
+
 export type AiRecipeMode = "fridge" | "random" | "prompt";
 
 export interface GenerateAiRecipeOptions {
@@ -93,8 +96,23 @@ Return exactly one JSON object with this shape:
   "sourceUrl": string | null
 }
 
+VALID VALUES:
+
+- "label":
+  - MUST be either null or EXACTLY ONE of these strings:
+    ${BASE_LABEL_OPTIONS.map((l) => `"${l}"`).join(", ")}.
+
+- "unit":
+  - MUST be either null or EXACTLY ONE of these strings:
+    ${FLAT_UNITS.map((u) => `"${u}"`).join(", ")}.
+  - If no meaningful unit applies (e.g. "salt to taste"), set "unit" to null
+    and put phrases like "to taste", "as needed" into "note" instead.
+
 Guidelines:
-- Use realistic quantities and units.
+- Use realistic quantities and units from the allowed list.
+- Prefer intuitive units ("cup", "tbsp", "tsp" for small amounts; "g" or "oz" for weight; etc.).
+- If quantity is a simple count, prefer units like "piece", "item", "each", "serving", "bunch", etc. from the allowed list.
+- For each ingredient, ALWAYS pick the most appropriate "label" from the allowed label list (or null if nothing fits).
 - Use short, clear step instructions.
 - "tags": 2–6 short keywords, e.g. ["quick", "vegetarian", "pasta"].
 - If you don't know photoUrl or sourceUrl, set them to null.
