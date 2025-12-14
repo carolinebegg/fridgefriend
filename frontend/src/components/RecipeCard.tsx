@@ -22,6 +22,8 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 }) => {
   const { prepTimeMinutes, cookTimeMinutes } = recipe;
   const totalTimeMinutes = (prepTimeMinutes || 0) + (cookTimeMinutes || 0);
+  const [ingredientsExpanded, setIngredientsExpanded] = React.useState(false);
+  const [instructionsExpanded, setInstructionsExpanded] = React.useState(false);
 
   // 🔹 Pick at most 3 important tags for the card
   const { visibleTags, remainingCount } = selectImportantTags(
@@ -100,56 +102,105 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
         />
       )}
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Ingredients</Text>
+      <Pressable
+        style={styles.sectionHeader}
+        onPress={() => setIngredientsExpanded(!ingredientsExpanded)}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={styles.sectionTitle}>Ingredients</Text>
+          <View style={styles.ingredientHeaderRow}>
+            <Text style={styles.ingredientCountText}>
+              <Text style={{ fontWeight: "700" }}>
+                {countAvailableIngredients(recipe.ingredients).fridge}/{recipe.ingredients.length}
+              </Text>
+              {" "}ingredients
+            </Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.addToGroceryButton,
+                pressed && styles.addToGroceryPressed,
+              ]}
+              onPress={() => onAddToGrocery(recipe)}
+            >
+              <Ionicons name="cart" size={12} color={COLORS.text} />
+              <Text style={styles.addToGroceryText}>Add to grocery list</Text>
+            </Pressable>
+          </View>
+        </View>
         <Pressable
           style={({ pressed }) => [
-            styles.addToGroceryButton,
-            pressed && styles.addToGroceryPressed,
+            styles.expandButton,
+            pressed && styles.expandButtonPressed,
           ]}
-          onPress={() => onAddToGrocery(recipe)}
+          onPress={() => setIngredientsExpanded(!ingredientsExpanded)}
         >
-          <Ionicons name="cart" size={14} color={COLORS.text} />
-          <Text style={styles.addToGroceryText}>Add to grocery</Text>
+          <Ionicons
+            name={ingredientsExpanded ? "chevron-up" : "chevron-down"}
+            size={20}
+            color={COLORS.text}
+          />
         </Pressable>
-      </View>
+      </Pressable>
 
-      <View style={styles.ingredientsList}>
-        {recipe.ingredients.length === 0 ? (
-          <Text style={styles.emptyText}>No ingredients yet.</Text>
-        ) : (
-          recipe.ingredients.map((ing, idx) => (
-            <View key={`${ing.name}-${idx}`} style={styles.ingredientRow}>
-              <View style={styles.statusIcon}>{renderStatusIcon(ing)}</View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.ingredientName} numberOfLines={1}>
-                  {ing.name}
-                </Text>
-                <Text style={styles.ingredientMeta} numberOfLines={1}>
-                  {formatIngredientMeta(ing)}
-                </Text>
-              </View>
-            </View>
-          ))
-        )}
-      </View>
+      {ingredientsExpanded && (
+        <>
+          <View style={styles.ingredientsList}>
+            {recipe.ingredients.length === 0 ? (
+              <Text style={styles.emptyText}>No ingredients yet.</Text>
+            ) : (
+              recipe.ingredients.map((ing, idx) => (
+                <View key={`${ing.name}-${idx}`} style={styles.ingredientRow}>
+                  <View style={styles.statusIcon}>{renderStatusIcon(ing)}</View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.ingredientName} numberOfLines={1}>
+                      {ing.name}
+                    </Text>
+                    <Text style={styles.ingredientMeta} numberOfLines={1}>
+                      {formatIngredientMeta(ing)}
+                    </Text>
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        </>
+      )}
 
       {recipe.steps && recipe.steps.length > 0 ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Instructions</Text>
-          {recipe.steps.slice(0, 4).map((step, idx) => (
-            <View key={idx} style={styles.stepRow}>
-              <Text style={styles.stepBullet}>{idx + 1}.</Text>
-              <Text style={styles.stepText}>{step}</Text>
+        <>
+          <Pressable
+            style={styles.sectionHeader}
+            onPress={() => setInstructionsExpanded(!instructionsExpanded)}
+          >
+            <Text style={styles.sectionTitle}>Instructions</Text>
+            <View style={styles.headerActions}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.expandButton,
+                  pressed && styles.expandButtonPressed,
+                ]}
+                onPress={() => setInstructionsExpanded(!instructionsExpanded)}
+              >
+                <Ionicons
+                  name={instructionsExpanded ? "chevron-up" : "chevron-down"}
+                  size={20}
+                  color={COLORS.text}
+                />
+              </Pressable>
             </View>
-          ))}
-          {recipe.steps.length > 4 ? (
-            <Text style={styles.moreText}>
-              +{recipe.steps.length - 4} more step
-              {recipe.steps.length - 4 === 1 ? "" : "s"}
-            </Text>
-          ) : null}
-        </View>
+          </Pressable>
+
+          {instructionsExpanded && (
+            <View style={styles.section}>
+              {recipe.steps.map((step, idx) => (
+                <View key={idx} style={styles.stepRow}>
+                  <Text style={styles.stepBullet}>{idx + 1}.</Text>
+                  <Text style={styles.stepText}>{step}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </>
       ) : null}
     </View>
   );
@@ -158,6 +209,18 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
 export default RecipeCard;
 
 // ---------- helpers ----------
+
+function countAvailableIngredients(ingredients: RecipeIngredient[]): { fridge: number; grocery: number } {
+  const fridge = ingredients.filter((ing) => {
+    const status = ing.availability?.status;
+    return status === "fridge" || status === "fridge-and-grocery";
+  }).length;
+  const grocery = ingredients.filter((ing) => {
+    const status = ing.availability?.status;
+    return status === "grocery" || status === "fridge-and-grocery";
+  }).length;
+  return { fridge, grocery };
+}
 
 function renderStatusIcon(ingredient: RecipeIngredient) {
   const status = ingredient.availability?.status;
@@ -266,6 +329,25 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: COLORS.text,
   },
+  ingredientHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingRight: 8,
+    marginTop: 4,
+    gap: 10,
+  },
+  ingredientCountText: {
+    fontSize: 12,
+    color: COLORS.muted,
+  },
+  expandButton: {
+    padding: 6,
+    borderRadius: 8,
+  },
+  expandButtonPressed: {
+    backgroundColor: "#F7F0E3",
+  },
   ingredientsList: {
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -322,16 +404,17 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: COLORS.border,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     backgroundColor: COLORS.pillBg,
   },
   addToGroceryPressed: {
     opacity: 0.7,
   },
   addToGroceryText: {
-    marginLeft: 6,
-    fontWeight: "700",
+    marginLeft: 4,
+    fontWeight: "600",
     color: COLORS.text,
+    fontSize: 12,
   },
 });

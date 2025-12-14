@@ -300,7 +300,7 @@ const GroceryScreen: React.FC = () => {
               ]}
               ListEmptyComponent={
                 <Text style={styles.emptyText}>
-                  Your grocery list is empty!. Add more items with the{" "}
+                  Your grocery list is empty! Add more items with the{" "}
                   <Text style={styles.emptyTextAccent}>plus</Text> button.
                 </Text>
               }
