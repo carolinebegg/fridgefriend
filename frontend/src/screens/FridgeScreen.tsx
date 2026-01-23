@@ -268,15 +268,19 @@ const FridgeScreen: React.FC = () => {
             "Grain",
             "Meat",
             "Produce",
+            "Seafood",
             "Snacks",
             "Sweets",
             "Beverages",
+            "Alcohol",
             "Condiments",
             "Spices",
             "Canned",
             "Frozen",
-            "Other",
+            "Frozen Treats",
             "Takeout", // fridge-only
+            "Meal Prep", // fridge-only
+            "Other",
           ]}
         />
       </View>

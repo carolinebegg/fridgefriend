@@ -145,7 +145,7 @@ const GroceryScreen: React.FC = () => {
   };
 
   const renderItem = ({ item }: { item: GroceryItem }) => {
-    const expiringSoon = isExpiringSoon(item.expirationDate);
+    const meta = getExpirationMeta(item.expirationDate);
 
     return (
       <View style={styles.itemRowContainer}>
@@ -189,15 +189,19 @@ const GroceryScreen: React.FC = () => {
             <Text
               style={[
                 styles.itemDetail,
-                expiringSoon && styles.itemDetailExpiring,
+                meta.style === "expiring" && styles.itemDetailExpiring,
+                meta.style === "expiredBold" && styles.itemDetailExpired,
               ]}
               numberOfLines={1}
             >
               {item.quantity} {item.unit}
-              {item.expirationDate
-                ? `  ·  Expires ${formatDate(item.expirationDate)}`
-                : ""}
+              {meta.primary ? `  ·  ${meta.primary}` : ""}
             </Text>
+            {meta.secondaryDate && (
+              <Text style={styles.itemDetailSecondary} numberOfLines={1}>
+                {meta.secondaryDate}
+              </Text>
+            )}
           </View>
 
           {/* vertical chip column: label on top, SOON below */}
@@ -207,9 +211,9 @@ const GroceryScreen: React.FC = () => {
                 <Text style={styles.labelText}>{item.label}</Text>
               </View>
             ) : null}
-            {expiringSoon && (
+            {meta.showExpiredPill && (
               <View style={styles.expiringPill}>
-                <Text style={styles.expiringPillText}>Soon</Text>
+                <Text style={[styles.expiringPillText, { color: COLORS.error }]}>EXPIRED</Text>
               </View>
             )}
           </View>
@@ -354,14 +358,37 @@ function formatDate(raw: string | undefined) {
 }
 
 // within 3 days (including today), future only
-function isExpiringSoon(raw?: string) {
-  if (!raw) return false;
-  const now = new Date();
+type ExpirationStyle = "muted" | "expiring" | "expiredBold";
+function getExpirationMeta(raw?: string): { primary: string | null; secondaryDate: string | null; style: ExpirationStyle; showExpiredPill: boolean } {
+  if (!raw) return { primary: null, secondaryDate: null, style: "muted", showExpiredPill: false };
   const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return false;
-  const diffMs = d.getTime() - now.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-  return diffDays >= 0 && diffDays <= 3;
+  if (Number.isNaN(d.getTime())) return { primary: null, secondaryDate: null, style: "muted", showExpiredPill: false };
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfTarget = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  const diffDays = (startOfTarget.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24);
+  const dateLabel = formatDate(raw);
+
+  if (diffDays === 1) {
+    return { primary: "EXPIRES TOMORROW", secondaryDate: dateLabel, style: "expiring", showExpiredPill: false };
+  }
+  if (diffDays === 0) {
+    return { primary: "EXPIRES TODAY", secondaryDate: dateLabel, style: "expiredBold", showExpiredPill: false };
+  }
+  if (diffDays === -1) {
+    return { primary: "EXPIRED YESTERDAY", secondaryDate: dateLabel, style: "expiredBold", showExpiredPill: true };
+  }
+  if (diffDays < -1) {
+    return { primary: "EXPIRED", secondaryDate: dateLabel, style: "expiredBold", showExpiredPill: true };
+  }
+  if (diffDays === 2 || diffDays === 3) {
+    // red, normal weight
+    return { primary: `Expires ${dateLabel}`, secondaryDate: null, style: "expiring", showExpiredPill: false };
+  }
+  // Future beyond 3 days
+  return { primary: `Expires ${dateLabel}`, secondaryDate: null, style: "muted", showExpiredPill: false };
 }
 
 export default GroceryScreen;

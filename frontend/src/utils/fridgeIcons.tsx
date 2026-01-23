@@ -39,6 +39,12 @@ export function getFridgeIconForItem(
     iconName = "fish";
   }
 
+  // ---------- SALAD (lettuce) ----------
+  else if (/salad/.test(n)) {
+    IconComponent = MaterialCommunityIcons;
+    iconName = "carrot";
+  }
+
   // ---------- SWEETS & DESSERTS ----------
   else if (/(birthday cake|cheesecake|cake)/.test(n)) {
     IconComponent = MaterialCommunityIcons;
@@ -64,6 +70,12 @@ export function getFridgeIconForItem(
   } else if (/(popsicle|ice pop|fudgsicle)/.test(n)) {
     IconComponent = MaterialCommunityIcons;
     iconName = "ice-pop";
+  }
+
+  // ---------- FROZEN TREATS (by label) ----------
+  else if (l.includes("frozen treats")) {
+    IconComponent = MaterialCommunityIcons;
+    iconName = "ice-cream";
   }
 
   // ---------- DAIRY ----------
@@ -144,7 +156,7 @@ export function getFridgeIconForItem(
   }
 
   // ---------- ALCOHOL ----------
-  else if (/(wine|beer|vodka|whiskey|liquor|gin|rum)/.test(n)) {
+  else if (/(wine|beer|vodka|whiskey|liquor|gin|rum)/.test(n) || l.includes("alcohol")) {
     IconComponent = FontAwesome6;
     iconName = "wine-bottle";
   }

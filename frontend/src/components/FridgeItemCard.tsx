@@ -25,7 +25,7 @@ const FridgeItemCard: React.FC<FridgeItemCardProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const expiringSoon = isExpiringSoon(item.expirationDate);
+  const meta = getExpirationMeta(item.expirationDate);
 
   return (
     <View style={styles.card}>
@@ -49,15 +49,29 @@ const FridgeItemCard: React.FC<FridgeItemCardProps> = ({
       </Text>
 
       {item.expirationDate && (
-        <Text
-          style={[
-            styles.expirationText,
-            expiringSoon && styles.expirationTextWarning,
-          ]}
-          numberOfLines={1}
-        >
-          Expires {formatDate(item.expirationDate)}
-        </Text>
+        <>
+          <Text
+            style={[
+              styles.expirationText,
+              meta.style === "expiring" && styles.expirationTextWarning,
+              meta.style === "expiredBold" && styles.expirationTextExpired,
+            ]}
+            numberOfLines={1}
+          >
+            {meta.primary}
+          </Text>
+          {meta.secondaryDate && (
+            <Text style={styles.expirationDateLine} numberOfLines={1}>
+              {meta.secondaryDate}
+            </Text>
+          )}
+        </>
+      )}
+
+      {meta.showExpiredPill && (
+        <View style={styles.expiredPill}>
+          <Text style={styles.expiredPillText}>EXPIRED</Text>
+        </View>
       )}
 
       <View style={styles.cardActionsRow}>
@@ -87,14 +101,36 @@ function formatDate(raw?: string) {
 }
 
 // within 3 days (including today), future only
-function isExpiringSoon(raw?: string) {
-  if (!raw) return false;
-  const now = new Date();
+type ExpirationStyle = "muted" | "expiring" | "expiredBold";
+function getExpirationMeta(raw?: string): { primary: string | null; secondaryDate: string | null; style: ExpirationStyle; showExpiredPill: boolean } {
+  if (!raw) return { primary: null, secondaryDate: null, style: "muted", showExpiredPill: false };
   const d = new Date(raw);
-  if (Number.isNaN(d.getTime())) return false;
-  const diffMs = d.getTime() - now.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-  return diffDays >= 0 && diffDays <= 3;
+  if (Number.isNaN(d.getTime())) return { primary: null, secondaryDate: null, style: "muted", showExpiredPill: false };
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfTarget = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+  const diffDays = (startOfTarget.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24);
+  const dateLabel = formatDate(raw);
+
+  if (diffDays === 1) {
+    return { primary: "EXPIRES TOMORROW", secondaryDate: dateLabel, style: "expiring", showExpiredPill: false };
+  }
+  if (diffDays === 0) {
+    return { primary: "EXPIRES TODAY", secondaryDate: dateLabel, style: "expiredBold", showExpiredPill: false };
+  }
+  if (diffDays === -1) {
+    return { primary: "EXPIRED YESTERDAY", secondaryDate: dateLabel, style: "expiredBold", showExpiredPill: true };
+  }
+  if (diffDays < -1) {
+    return { primary: "EXPIRED", secondaryDate: dateLabel, style: "expiredBold", showExpiredPill: true };
+  }
+  if (diffDays === 2 || diffDays === 3) {
+    return { primary: `Expires ${dateLabel}`, secondaryDate: null, style: "expiring", showExpiredPill: false };
+  }
+  // Future beyond 3 days
+  return { primary: `Expires ${dateLabel}`, secondaryDate: null, style: "muted", showExpiredPill: false };
 }
 
 // ---------- Styles ----------
@@ -136,7 +172,32 @@ const styles = StyleSheet.create({
   },
   expirationTextWarning: {
     color: COLORS.error,
-    fontWeight: "500",
+  },
+  expirationTextExpired: {
+    color: COLORS.error,
+    fontWeight: "700",
+  },
+  expirationDateLine: {
+    fontSize: 12,
+    color: COLORS.error,
+    fontWeight: "700",
+  },
+  expiredPill: {
+    marginTop: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: COLORS.pillBg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignSelf: "flex-start",
+  },
+  expiredPillText: {
+    fontSize: 10,
+    color: COLORS.error,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   labelPill: {
     backgroundColor: COLORS.pillBg,

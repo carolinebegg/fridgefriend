@@ -15,9 +15,13 @@ export const BASE_LABEL_OPTIONS = [
   "Condiments",
   "Spices",
   "Snacks",
+  "Seafood",
   "Sweets",
   "Beverages",
+  "Alcohol",
   "Canned",
   "Frozen",
+  "Alcohol",
+  "Frozen Treats",
   "Other",
 ];

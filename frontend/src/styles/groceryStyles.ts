@@ -196,6 +196,16 @@ export const groceryStyles = StyleSheet.create({
   itemDetailExpiring: {
     color: COLORS.error,
   },
+  itemDetailExpired: {
+    color: COLORS.error,
+    fontWeight: "700",
+  },
+  itemDetailSecondary: {
+    fontSize: 12,
+    fontFamily: FONT.body,
+    color: COLORS.error,
+    fontWeight: "700",
+  },
 expiringPill: {
   marginTop: 4,               // stacks below label
   paddingHorizontal: 6,
